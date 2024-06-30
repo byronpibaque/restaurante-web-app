@@ -1,0 +1,291 @@
+
+.text-rojo{
+    color: var(--color-rojo);
+}
+
+.text-azul{
+    color: var(--color-azul);
+}
+
+.text-verde{
+    color: var(--color-verde);
+}
+
+.text-naranja{
+    color: var(--color-naranja);
+}
+
+.text-negro{
+    color: var(--color-negro);
+}
+
+.text-title{
+    color: var(--color-azul);
+    font-weight: var(--estilo-negrita);
+    font-size: var(--fuente-titulo);
+}
+
+.text-subtitle{
+    color: var(--color-azul);
+    font-weight: var(--estilo-negrita);
+    font-size: var(--fuente-subtitulo);
+}
+
+.text-body{
+    color: var(--color-negro);
+    font-size: var(--fuente-body);
+}
+
+.text-negrita{
+    color: var(--color-negro);
+    font-size: var(--fuente-body);
+    font-weight: var(--estilo-negrita);
+    
+}
+
+.boton-verde {
+    background-color: var(--color-verde);
+    color: white;
+    border: none;
+    margin-left: 10px;
+}
+
+.boton-verde-login{
+    cursor: pointer;
+    background-color: var(--color-verde);
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+}
+
+.boton-rojo {
+    background-color: var(--color-rojo);
+    color: white;
+    border: none;
+    margin-left: 10px;
+}
+
+.boton-azul {
+    background-color: var(--color-azul);
+    color: white;
+    border: none;
+    margin-left: 10px;
+}
+
+.boton-naranja {
+    background-color: var(--color-naranja);
+    color: white;
+    border: none;
+    margin-left: 10px;
+}
+
+.boton-marron {
+    background-color: var(--color-marron);
+    color: white;
+    border: none;
+    margin-left: 10px;
+}
+
+
+.input-spacing {
+    margin: 10px 10px 10px 10px;
+}
+
+.buton-spacing {
+    margin: 10px 10px 10px 10px;
+}
+
+.flex {
+    display: flex;
+}
+
+
+.screen-container {
+    padding-top: 5px;
+    height: 100vh;
+}
+
+.profile-item-menu .p-menubar {
+    justify-content: flex-end;
+}
+
+.p-menubar {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.p-menubar .p-menuitem-link {
+    padding: 10px 20px; /* Esto incrementa el espaciado alrededor del texto */
+    font-size: 1.2em;  /* Cambiar el tamaño a un valor que te parezca conveniente */
+    background-color: transparent;
+}
+
+.p-menubar .p-menuitem-link:hover {
+    background-color: transparent;
+}
+
+
+h1 {
+    font-size: var(--fuente-titulo);
+}
+
+h2 {
+    font-size: var(--fuente-subtitulo);
+}
+
+body-background {
+    background-color: var(--color-background);
+}
+
+body-font {
+    font-size: var(--fuente-body);
+    font-family: var(--tipo-fuente), serif;
+}
+
+.negrita {
+    font-weight: var(--estilo-negrita);
+}
+
+.cursiva {
+    font-style: var(--estilo-cursiva);
+}
+
+.subrayado {
+    text-decoration: var(--estilo-subrayado);
+}
+
+.flex {
+    display: flex;
+}
+
+.menu-container {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.profile-item-menu .p-menubar {
+    justify-content: flex-end;
+}
+
+.p-menubar {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.p-menubar .p-menuitem-link {
+    background-color: transparent;
+}
+
+.p-menubar .p-menuitem-link:hover {
+    background-color: transparent;
+}
+
+.container-login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2em;
+    margin: 0 auto;
+}
+
+#app .input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1em;
+}
+
+#app .input-group label,
+#app input[type="text"],
+#app input[type="password"] {
+    font-size: 18px;
+    padding: 5px;
+}
+
+#app .forgot-password {
+    display: block;
+    text-align: right;
+    margin: 10px 10px 10px 10px;
+}
+
+.p-dialog .p-dialog-header {
+    color: var(--color-azul);
+    font-weight: var(--estilo-negrita);
+    font-size: var(--fuente-titulo);
+}
+
+
+.profile-info, .change-password {
+    flex: 1;
+}
+
+.separator {
+    width: 1px;
+    background-color: #ccc;
+    margin: 0 10px; /* Ajusta el margen según lo necesites */
+}
+
+.responsive-dialog {
+    padding: 1rem;
+}
+
+.barra-herramientas {
+    align-items: center;
+    margin: 1rem 1rem 1rem 1rem;
+    background-color: var(--color-background);
+    height: 80px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.dialog-content {
+    padding: 1rem;
+}
+
+.p-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem;
+}
+
+.responsive-datatable {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.option-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+    .barra-herramientas {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .responsive-dialog1 {
+        width:90%
+    }
+
+    .p-dialog-footer {
+        padding: 0.5rem;
+    }
+
+    .option-buttons {
+        flex-direction: row;
+    }
+    .menu-container {
+        flex-direction: column; /* Apila los elementos uno encima del otro */
+        align-items: stretch; /* Ajusta el contenido a lo largo del eje de la columna */
+    }
+}

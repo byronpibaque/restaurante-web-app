@@ -1,0 +1,21 @@
+:root {
+    --color-blanco: #faf6f6;
+    --color-rojo: #af0d0d;
+    --color-azul: #37659f;
+    --color-negro: #3b3c3e;
+    --color-verde: #46c822;
+    --color-naranja: #ff8c00;
+    --color-marron: #cc8d4e;
+    --color-background: #f0f0f0;
+
+    --fuente-titulo: 1.5em;  /*Tamaño de fuente para títulos*/
+    --fuente-subtitulo: 1em; /*Tamaño de fuente para subtítulos*/
+    --fuente-body: 0.9em;    /*Tamaño de fuente para body*/
+
+    --tipo-fuente: sans-serif; /*Tipo de fuente para la aplicación*/
+
+    /*Estilos de fuente para texto en negrita, cursiva y subrayado */
+    --estilo-negrita: bold;
+    --estilo-cursiva: italic;
+    --estilo-subrayado: underline;
+}
