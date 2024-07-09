@@ -61,6 +61,46 @@
             @click="cancelarRoles"></Button>
         </div>
       </Dialog>
+      <Dialog :header="dialogHeaderCajas" v-model:visible="mostrarDialogoCajas" @hide="limpiarCajas()"
+              class="responsive-dialog1">
+        <div class="dialog-content">
+          <InputText disabled id="usuario" v-model="cajasReg.nombre_pila" placeholder="Usuario" class="input-spacing" />
+        </div>
+        <Divider />
+        <div class="col-12 md:col-12 lg:col-12 xl:col-12" v-if="editarCajas|| nuevaCaja">
+          <Button class="p-button-rounded p-button-success buton-spacing" @click="agregarCajas()"> <i
+              class="pi pi-plus"></i>
+          </Button>
+          <AutoComplete id="cajas" placeholder="Cajas:" v-model="cajasReg.caja" :suggestions="admiCajas"
+                          @complete="searchCajas" field="label"
+                          dropdown
+            />
+        </div>
+        <div>
+          <DataTable :value="datosCajas" class="responsive-datatable">
+            <Column field="options" header="Options" v-if="!nuevaCaja">
+              <template #body="slotProps">
+                <div class="option-buttons" v-if="update">
+                  <Button icon="pi pi-pencil" class="boton-verde" @click="editarCajasEmpleado(slotProps.data)"
+                          v-tooltip="'Editar'"></Button>
+                  <Button icon="pi pi-trash" class="boton-rojo" @click="eliminarCajasEmpleado(slotProps.data)"
+                          v-tooltip="'Eliminar'"></Button>
+                </div>
+              </template>
+            </Column>
+            <Column field="nombre" header="Caja"></Column>
+            <Column field="estado" header="Estado"></Column>
+          </DataTable>
+        </div>
+        <div class="p-dialog-footer">
+          <Button v-if="update" label="Actualizar" icon="pi pi-check" class="p-button-success"
+                  @click="actualizarCajasEmpleado"></Button>
+          <Button v-if="!view && !update" label="Guardar" icon="pi pi-check" class="p-button-success"
+                  @click="agregarCajasEmpleado"></Button>
+          <Button label="Cancelar" icon="pi pi-times" class="boton-rojo"
+                  @click="cancelarCajas"></Button>
+        </div>
+      </Dialog>
     </div>
 
     <DataTable :value="datos" class="responsive-datatable">
@@ -74,6 +114,8 @@
               v-tooltip="'Editar roles'"></Button>
             <Button icon="pi pi-id-card" class="boton-azul" @click="NuevosRoles(slotProps.data)"
               v-tooltip="'Nuevos roles'"></Button>
+            <Button icon="fas fa-cash-register" class="boton-verde" @click="NuevosCajas(slotProps.data)"
+                    v-tooltip="'Asignar caja'"></Button>
             <Button icon="pi pi-trash" class="boton-rojo" @click="eliminar(slotProps.data)"
               v-tooltip="'Eliminar'"></Button>
             <Button v-if="slotProps.data.estado === 'Eliminado'" icon="pi pi-history" class="boton-naranja"
@@ -100,6 +142,7 @@ import admiParametrosService from "@/components/services/admiParametrosService";
 import AutoComplete from "primevue/autocomplete";
 import admiPersonaService from "../services/admiPersonasService";
 import Divider from "primevue/divider";
+import Dropdown from "primevue/dropdown";
 
 export default {
   name: "AdmiEmpleado",
@@ -112,11 +155,13 @@ export default {
     Tooltip,
     AdmiPersonaDialog,
     AutoComplete,
-    Divider
+    Divider,
+    Dropdown
   },
   data() {
     return {
       mostrarDialogoRoles: false,
+      mostrarDialogoCajas: false,
       mostrarDialogo: false,
       nuevoRegistro: {
         id_persona: "",
@@ -136,12 +181,16 @@ export default {
       },
       datos: [],
       datosRoles: [],
+      datosCajas: [],
       dialogHeader: "Nuevo Registro",
       dialogHeaderRoles: "Editar roles",
+      dialogHeaderCajas: "Editar cajas",
       endpoint: "/infoEmpleado",
       endpointAcceso: "/infoAccesoEmpleado",
       endpointRolEmp: "/infoRolEmpleado",
+      endpointCajaEmp: "/infoEmpleadoCaja",
       endpointRol: "/admiRol",
+      endpointCaja: "/infoCaja",
       view: false,
       update: false,
       busqueda: "",
@@ -154,20 +203,34 @@ export default {
         id_rol: "",
         id_empleado: ""
       },
+      cajasReg: {
+        nombre: "",
+        caja: "",
+        id_caja: "",
+        id_empleado: ""
+      },
       admiRoles: [],
+      admiCajas: [],
       editarRoles: false,
-      nuevoRol: false
+      editarCajas: false,
+      nuevoRol: false,
+      nuevaCaja: false,
     };
   },
   created() {
     this.listar();
     this.getParametros();
     this.getRoles();
+    this.getCajas();
   },
   methods: {
     cancelarRoles(){
       this.mostrarDialogoRoles=false;
       this.limpiarRoles()
+    },
+    cancelarCajas(){
+      this.mostrarDialogoCajas=false;
+      this.limpiarCajas()
     },
     editarRolesEmpleado(item) {
       this.editarRoles = true;
@@ -175,6 +238,14 @@ export default {
       const index = this.datosRoles.findIndex(detalleItem => detalleItem === item);
       if (index !== -1) {
         this.datosRoles.splice(index, 1);
+      }
+    },
+    editarCajasEmpleado(item) {
+      this.editarCajas = true;
+      this.cajasReg = item
+      const index = this.datosCajas.findIndex(detalleItem => detalleItem === item);
+      if (index !== -1) {
+        this.datosCajas.splice(index, 1);
       }
     },
     async eliminarRolesEmpleado(item) {
@@ -190,6 +261,31 @@ export default {
             timer: 2000
           });
           this.limpiarRoles();
+        }
+      } catch (e) {
+        console.log(e);
+        const data = e.response;
+        console.log(e.response);
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢" + data.status,
+          text: `Algo salió mal: ${data.data.message}`,
+        });
+      }
+    },
+    async eliminarCajasEmpleado(item) {
+      try {
+        const response = await this.$api.delete(`${this.endpointCajaEmp}/${item.id_caja_empleado}`);
+        const resp = response.data;
+        if (resp.success === true) {
+          this.mostrarDialogoCajas = false;
+          this.$swal.fire({
+            icon: "success",
+            title: "Eliminado",
+            text: "Registro eliminado exitosamente!",
+            timer: 2000
+          });
+          this.limpiarCajas();
         }
       } catch (e) {
         console.log(e);
@@ -227,6 +323,36 @@ export default {
             text: "¡Roles actualizados!"
           });
           this.limpiarRoles();
+        }
+      } catch (error) {
+        console.log(error.response);
+      }
+    },
+    async actualizarCajasEmpleado() {
+      try {
+        let bandera = false;
+        for (const element of this.datosCajas) {
+          let params = {
+            estado: 'Activo',
+            usuario_creacion: 'Administrador',
+            usuario_modificacion: 'Administrador',
+            caja_id: element.caja_id,
+            empleado_id: this.cajasReg.empleado_id
+          };
+          const resEditRolesEmpleados = await this.$api.put(`${this.endpointCajaEmp}/${this.cajasReg.id_caja_empleado}`, params);
+          const respuesta = resEditRolesEmpleados.data;
+          if (respuesta.success === true) {
+            bandera = true;
+          }
+        }
+        if (bandera) {
+          this.mostrarDialogoCajas = false;
+          this.$swal.fire({
+            icon: "success",
+            title: "¡Bien! ✅",
+            text: "¡Roles actualizados!"
+          });
+          this.limpiarCajas();
         }
       } catch (error) {
         console.log(error.response);
@@ -270,6 +396,102 @@ export default {
         });
       }
 
+    },
+    async agregarCajasEmpleado() {
+      try {
+        let bandera = false;
+
+        for (const element of this.datosCajas) {
+          if (!element.id_caja_empleado) {
+            const params = {
+              empleado_id: this.cajasReg.id_empleado,
+              caja_id: element.caja_id,
+              estado: 'Activo',
+              usuario_creacion: this.$store.state.empleado.usuario,
+              usuario_modificacion: this.$store.state.empleado.usuario
+            };
+            const resAgregarRolesEmpleado = await this.$api.post(`${this.endpointCajaEmp}`, params);
+            const respuesta = resAgregarRolesEmpleado.data;
+            if (respuesta.success === true) {
+              bandera = true;
+            }
+          }
+        }
+        if (bandera === true) {
+          this.mostrarDialogoCajas = false;
+          this.limpiarCajas();
+          this.$swal.fire({
+            icon: "success",
+            title: "Bien.. ✅",
+            text: `Roles actualizados!`,
+          });
+        }
+      } catch (e) {
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+        });
+      }
+
+    },
+    NuevosCajas(item) {
+      this.nuevaCaja = true;
+      this.getCajasEmpleado(item.id_empleado);
+      this.cajasReg = item;
+      this.mostrarDialogoCajas = true;
+    },
+    agregarCajas() {
+      if (this.cajasReg.caja.value) {
+        this.datosCajas.push({
+          caja: this.cajasReg.caja.label,
+          caja_id: this.cajasReg.caja.value,
+          estado: 'Activo'
+        })
+      } else {
+        this.datosCajas.push({
+          caja: this.cajasReg.caja,
+          caja_id: this.cajasReg.caja,
+          estado: 'Activo'
+        })
+      }
+      if (this.editarCajas) {
+        this.editarCajas = false;
+      }
+    },
+    async searchCajas(event) {
+      try {
+        const resAdmiRoles = await this.$api.get(`${this.endpointCaja}`);
+        const rol = resAdmiRoles.data;
+        const filteredRoles = rol.data.filter(param =>
+            param.nombre.toLowerCase().includes(event.query.toLowerCase())
+        );
+        this.admiCajas = filteredRoles.map(param => {
+          return {
+            label: param.nombre,
+            value: param.id_caja
+          };
+        });
+      } catch (e) {
+        console.error("Error al buscar sugerencias:", e);
+      }
+    },
+    async getCajas() {
+      try {
+        const resAdmiRoles = await this.$api.get(`${this.endpointCaja}`);
+        const respuesta = resAdmiRoles.data;
+        if (respuesta.success === true) {
+          this.admiCajas = respuesta.data;
+        }
+      } catch (e) {
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+        });
+      }
     },
     NuevosRoles(item) {
       this.nuevoRol = true;
@@ -349,6 +571,31 @@ export default {
       } catch (error) {
         this.update = false;
         console.log(error.response);
+      }
+    },
+    async getCajasEmpleado(strIdEmpleado) {
+      try {
+        const params = {
+          empleado_id: strIdEmpleado,
+          estado: 'Activo'
+        }
+        const resRolesEmpleado = await this.$api.post(`${this.endpointCajaEmp}/filter`, params);
+        const respuesta = resRolesEmpleado.data;
+        if (respuesta.success === true) {
+          for (const respuestaElement of respuesta.data) {
+            const respuestaCaja = await this.$api.get(`${this.endpointCaja}/${respuestaElement.caja_id}`);
+            const data = respuestaCaja.data.data;
+            const cajas = {
+              id_caja : respuestaElement.caja_id,
+              nombre: data.nombre,
+              estado: respuestaElement.estado,
+            };
+            this.datosCajas.push(cajas);
+          }
+        }
+      } catch (error) {
+        this.update = false;
+        console.log(error);
       }
     },
     async getParametros() {
@@ -548,6 +795,14 @@ export default {
       this.view = false;
       this.nuevoRol = false;
       this.rolesReg = {};
+    },
+    limpiarCajas() {
+      this.editarCajas = false;
+      this.datosCajas = [];
+      this.update = false;
+      this.view = false;
+      this.nuevaCaja = false;
+      this.cajasReg = {};
     }
   },
 };

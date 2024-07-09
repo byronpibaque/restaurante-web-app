@@ -7,6 +7,8 @@ import Column from "primevue/column";
 import DataView from "primevue/dataview";
 import Tag from "primevue/tag";
 import Button from "primevue/button";
+import infoArqueoCajaEmpleadoService from "@/components/services/infoArqueoCajaEmpleadoService.js";
+import {api} from "@/api.js";
 
 export default {
   components: {
@@ -22,12 +24,39 @@ export default {
     return {
       mesasDisponibles: [],
       activeIndex: 0,
+      estadoCaja:false,
+
     };
   },
   created() {
     this.getMesasDisponibles();
+    this.comprobarEstadoCaja();
+
   },
   methods: {
+    async comprobarEstadoCaja(){
+      const empleado_caja = this.$store.state.cajas[0];
+      if(empleado_caja){
+        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
+        if(response.estado==='Activo'){
+          this.estadoCaja=true;
+        }else if(response.estado==='Finalizado'){
+          this.estadoCaja=false;
+          this.$swal.fire({
+            icon: "warning",
+            title: "Ups 😢",
+            text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
+          });
+        }
+      }else{
+        this.estadoCaja=false;
+        this.$swal.fire({
+          icon: "warning",
+          title: "Ups 😢",
+          text: `No se ha encontrado un arqueo para caja hoy!`,
+        });
+      }
+    },
     enviaACrearPedido(item){
       const params = {sucursal_id: item.sucursal_id,mesa_id:item.id_mesa};
       this.$router.push({
@@ -129,11 +158,10 @@ export default {
                           <Button
                               icon="pi pi-shopping-cart"
                               label="Crear Pedido"
-                              :disabled="item.estado === 'Ocupada'"
+                              :disabled="item.estado === 'Ocupada' || !estadoCaja"
                               class="flex-auto white-space-nowrap"
                               @click="enviaACrearPedido(item)"
                           ></Button>
-
                         </div>
                       </div>
                     </div>
@@ -145,7 +173,7 @@ export default {
         </div>
       </div>
     </TabPanel>
-    <TabPanel>
+    <!--<TabPanel>
       <template #header>
         <div class="flex align-items-center gap-2">
           <i class="fas fa-cart-shopping"></i>
@@ -161,5 +189,6 @@ export default {
         </div>
       </template>
     </TabPanel>
+    -->
   </TabView>
 </template>

@@ -1,78 +1,117 @@
 <template>
   <div>
-    <div v-if="isAuthenticated">
-      <div class="menu-container">
-        <Menubar :model="mainItems">
-          <template #item="{ item, props, hasSubmenu }">
-            <a v-ripple class="flex align-items-center" v-bind="props.action" @click="handleClick(item.id)"
-               v-tooltip="item.content">
-              <i :class="item.icon"></i>
-              <span class="ml-2">{{ item.content }}</span>
-              <i v-if="hasSubmenu" class="pi pi-angle-right ml-auto"></i>
-            </a>
-          </template>
-        </Menubar>
-        <Menubar :model="profileItem" class="profile-item-menu">
-          <template #item="{ item, props, hasSubmenu }">
-            <a v-ripple class="flex align-items-center" v-bind="props.action" @click="handleClick(item.id)"
-               v-tooltip="item.content">
-              <i :class="item.icon"></i>
-              <span class="ml-2">{{ item.content }}</span>
-              <i v-if="hasSubmenu" class="pi pi-angle-right ml-auto"></i>
-            </a>
-          </template>
-        </Menubar>
-      </div>
-      <Dialog v-model:visible="displayProfile" modal header="Perfil" :style="{ maxWidth: '20rem' }" :maximizable="true">
-        <div class="row">
-          <div class="col-sm-12 col-md-6">
-            <p><strong class="text-subtitle">Nombre:</strong> <span class="text-body">{{ infoEmpleado.nombre_pila || 'No existe data.' }}</span></p>
-            <p><strong class="text-subtitle">Identificación:</strong> <span class="text-body">{{
-                infoEmpleado.numero_identificacion || 'No existe data.' }}</span></p>
-            <p><strong class="text-subtitle">Roles:</strong>
-              <ul v-if="this.$store.state.roles.length > 0">
-                <li v-for="role in this.$store.state.roles" :key="role" class="text-body">{{ role.rol }}</li>
-              </ul>
-              <span v-else class="text-rojo"> No existe data</span>
-            </p>
-            <p><strong class="text-subtitle">Cajas:</strong>
-              <ul v-if="this.$store.state.cajas.length > 0">
-                <li v-for="caja in this.$store.state.cajas" :key="caja" class="text-body">{{ caja }}</li>
-              </ul>
-              <span v-else class="text-rojo"> No existe data.</span>
-            </p>
-            <p><strong class="text-subtitle">Cocinas:</strong>
-              <ul v-if="this.$store.state.cocinas.length > 0">
-                <li v-for="cocina in this.$store.state.cocinas" :key="cocina" class="text-body">{{ cocina }}</li>
-              </ul>
-              <span v-else class="text-rojo"> No existe data.</span>
-            </p>
-            <p><strong class="text-subtitle">Usuario:</strong> <span class="text-body">{{
-                this.$store.state.empleado.usuario
-                || 'No existe data.' }}</span></p>
-            <p>
-              <strong class="text-subtitle">Contraseña:</strong>
-              <span v-if="showPassword">{{ $store.state.empleado.password }}</span>
-              <span v-else>••••••••••</span>
-              <i class="pi" :class="{ 'pi-eye': !showPassword, 'pi-eye-slash': showPassword }"
-                 @click="togglePasswordVisibility" style="font-size: larger;"></i>
-            </p>
+    <div class="content">
+      <div v-if="isAuthenticated">
+        <div class="menu-container">
+          <Menubar :model="mainItems">
+            <template #item="{ item, props, hasSubmenu }">
+              <a v-ripple class="flex align-items-center" v-bind="props.action" @click="handleClick(item.id)"
+                 v-tooltip="item.content">
+                <i :class="item.icon"></i>
+                <span class="ml-2">{{ item.content }}</span>
+                <i v-if="hasSubmenu" class="pi pi-angle-right ml-auto"></i>
+              </a>
+            </template>
+          </Menubar>
+          <Menubar :model="profileItem" class="profile-item-menu">
+            <template #item="{ item, props, hasSubmenu }">
+              <a v-ripple class="flex align-items-center" v-bind="props.action" @click="handleClick(item.id)"
+                 v-tooltip="item.content">
+                <i :class="item.icon"></i>
+                <span class="ml-2">{{ item.content }}</span>
+                <i v-if="hasSubmenu" class="pi pi-angle-right ml-auto"></i>
+              </a>
+            </template>
+          </Menubar>
+        </div>
+        <Dialog v-model:visible="displayProfile" modal header="Perfil" :style="{ maxWidth: '20rem' }" :maximizable="true">
+          <div class="row">
+            <div class="col-sm-12 col-md-6">
+              <p><strong class="text-subtitle">Nombre:</strong> <span class="text-body">{{ infoEmpleado.nombre_pila || 'No existe data.' }}</span></p>
+              <p><strong class="text-subtitle">Identificación:</strong> <span class="text-body">{{
+                  infoEmpleado.numero_identificacion || 'No existe data.' }}</span></p>
+              <p><strong class="text-subtitle">Roles:</strong>
+                <ul v-if="this.$store.state.roles.length > 0">
+                  <li v-for="role in this.$store.state.roles" :key="role" class="text-body">{{ role.rol }}</li>
+                </ul>
+                <span v-else class="text-rojo"> No existe data</span>
+              </p>
+              <p><strong class="text-subtitle">Cajas:</strong>
+                <ul v-if="this.$store.state.cajas.length > 0">
+                  <li v-for="caja in this.$store.state.cajas" :key="caja" class="text-body">{{ caja.caja }}</li>
+                </ul>
+                <span v-else class="text-rojo"> No existe data.</span>
+              </p>
+              <p><strong class="text-subtitle">Cocinas:</strong>
+                <ul v-if="this.$store.state.cocinas.length > 0">
+                  <li v-for="cocina in this.$store.state.cocinas" :key="cocina" class="text-body">{{ cocina }}</li>
+                </ul>
+                <span v-else class="text-rojo"> No existe data.</span>
+              </p>
+              <p><strong class="text-subtitle">Usuario:</strong> <span class="text-body">{{
+                  this.$store.state.empleado.usuario
+                  || 'No existe data.' }}</span></p>
+              <p>
+                <strong class="text-subtitle">Contraseña:</strong>
+                <span v-if="showPassword">{{ $store.state.empleado.password }}</span>
+                <span v-else>••••••••••</span>
+                <i class="pi" :class="{ 'pi-eye': !showPassword, 'pi-eye-slash': showPassword }"
+                   @click="togglePasswordVisibility" style="font-size: larger;"></i>
+              </p>
+            </div>
+            <div class="col-sm-12 col-md-6 col-6">
+              <div>
+                <span class="text-subtitle">Cambio de contraseña</span>
+                <input type="password" class="p-inputtext input-spacing" v-model="currentPassword"
+                       placeholder="Clave actual" />
+                <input type="password" class="p-inputtext input-spacing" v-model="newPassword"
+                       placeholder="Nueva clave" />
+                <button class="p-button p-button-success" @click="handleChangePassword">Cambiar contraseña</button>
+              </div>
+            </div>
           </div>
-          <div class="col-sm-12 col-md-6 col-6">
-            <div>
-              <span class="text-subtitle">Cambio de contraseña</span>
-              <input type="password" class="p-inputtext input-spacing" v-model="currentPassword"
-                     placeholder="Clave actual" />
-              <input type="password" class="p-inputtext input-spacing" v-model="newPassword"
-                     placeholder="Nueva clave" />
-              <button class="p-button p-button-success" @click="handleChangePassword">Cambiar contraseña</button>
+        </Dialog>
+      </div>
+      <div>
+        <router-view />
+      </div>
+    </div>
+
+    <div class="footer">
+      <!-- Columna izquierda: Información de la empresa -->
+      <div class="column-left">
+        <div class="container">
+          <div class="row">
+            <img src="../public/chef-masculino.png" alt="RestApp" class="company-logo">
+            <div class="col-md-6">
+              <p>© 2024 BKSoft</p>
             </div>
           </div>
         </div>
-      </Dialog>
-    </div>
-    <div>
-      <router-view />
+      </div>
+
+      <!-- Columna derecha: Detalles de caja y usuario -->
+      <div class="column-right">
+
+          <ul v-if="this.$store.state.cajas.length > 0">
+            <div class="container">
+              <div class="row">
+                <Button v-if="cajaSistema.estado!='Activo'" icon="fas fa-lock" severity="danger" text rounded aria-label="Star" v-tooltip="'Caja cerrada!'" />
+                <Button v-else-if="cajaSistema.estado=='Activo'" icon="fas fa-lock-open" severity="contrast" text rounded aria-label="Star" v-tooltip="'Caja abierta!'" />
+                <div class="container">
+                  <li v-for="caja in this.$store.state.cajas" :key="caja" class="text-body"><strong>{{caja.caja}}</strong>
+                    {{ cajaSistema.total_sistema }}
+                  </li>
+                </div>
+              </div>
+            </div>
+
+          </ul>
+          <br>
+        <ul>
+          <li v-if="this.$store.state.empleado" ><strong>Usuario</strong>: {{this.$store.state.empleado.usuario}}</li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -90,11 +129,14 @@ import { infoEmpleadoGetById } from "@/components/services/infoEmpleadoService.j
 import changePasswordService from './components/services/changePasswordService.js';
 import { toast } from 'vue3-toastify';
 import useSocket from "@/components/services/useSocket.js";
+import infoArqueoCajaEmpleadoService from "@/components/services/infoArqueoCajaEmpleadoService.js";
+import Button from "primevue/button";
 
 export default {
   components: {
     Menubar,
-    Dialog
+    Dialog,
+    Button
   },
   setup() {
     const displayProfile = ref(false);
@@ -155,7 +197,7 @@ export default {
         items: [
           {
             id: 'compras',
-            content: 'Compras',
+            content: 'Ingresos',
             icon: 'fas fa-cart-shopping',
           },
           {
@@ -179,9 +221,14 @@ export default {
             icon: 'fas fa-dolly'
           },
           {
-            id: 'arqueos',
-            content: 'Arqueos de caja',
+            id: 'movimientos',
+            content: 'Movimientos',
             icon: 'fas fa-cash-register'
+          },
+          {
+            id: 'arqueos',
+            content: 'Arqueos cajas',
+            icon: 'fas fa-sack-dollar'
           }
         ]
       }, {
@@ -228,11 +275,11 @@ export default {
             content: 'Productos',
             icon: 'fas fa-kitchen-set'
           },
-          {
+          /*{
             id: 'reservaciones',
             content: 'Reservaciones',
             icon: 'fas fa-book-open'
-          }
+          }*/
         ]
       }
     ]);
@@ -332,12 +379,22 @@ export default {
         case 'facturas':
           router.push('/info-facturas')
           break;
+        case 'compras':
+          router.push('/info-ingresos')
+          break;
+        case 'proveedores':
+          router.push('/admi-proveedor')
+          break;
+        case 'arqueos':
+          router.push('/info-arqueos')
+          break;
+        case 'movimientos':
+          router.push('/info-movimientos')
+          break;
       }
     }
-
     const currentPassword = ref("");
     const newPassword = ref("");
-
     const handleChangePassword = async () => {
       const currentPwd = currentPassword.value;
       const newPwd = newPassword.value;
@@ -367,6 +424,7 @@ export default {
     const { emitEvent,listenEvent } = useSocket(apiSocket);
 
     let infoEmpleado = ref({});
+    let cajaSistema = ref({});
     listenEvent('mensaje',(data)=>{
       console.log(data)
       toast(data,{
@@ -407,8 +465,18 @@ export default {
           }
         }
     );
-    onMounted(() => {
+    onMounted(async () => {
       store.dispatch('loadToken');
+
+      if(store.state.cajas[0]){
+        const empleado_caja = store.state.cajas[0];
+        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
+        if(response) {
+          cajaSistema.value = response;
+        }
+      }
+
+
     });
     return {
       logout,
@@ -425,7 +493,79 @@ export default {
       newPassword,
       handleInfoEmpleadoById,
       infoEmpleado,
+      cajaSistema
     }
   },
 }
 </script>
+<style scoped>
+.content {
+  margin-bottom: 80px; /* Ajusta este valor según el tamaño del footer */
+  position: relative; /* Asegúrate de que el contenido tenga una posición relativa */
+  z-index: 1; /* Z-index menor que el footer */
+}
+.footer {
+  background-color: #f8f9fa;
+  padding: 20px 0;
+  color: #495057;
+  bottom: 0;
+  width: 100%;
+  position: fixed;
+  z-index: 2; /* Z-index mayor que el contenido */
+}
+
+.container {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+.footer {
+  display: flex;
+  justify-content: space-between; /* Distribuye los elementos a lo largo del espacio disponible */
+  align-items: center;
+  margin-top: 10px; /* Ajusta el margen según tus necesidades */
+  height: 12%; /* Altura reducida del footer */
+}
+
+.company-logo {
+  width: 50px; /* Ajusta el tamaño de la imagen según tus necesidades */
+  margin-left: 10px; /* Espacio entre el nombre y la imagen */
+}
+
+.column-left {
+  display: flex;
+  align-items: center;
+}
+
+.column-right {
+  display: flex;
+  align-items: center;
+  margin-right: 15%;
+}
+</style>

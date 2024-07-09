@@ -1,12 +1,12 @@
 <template>
-  <span class="text-title">Pedidos</span>
+  <span class="text-title">Ingresos</span>
 
   <TabView :activeIndex.sync="activeIndex" @tab-change="limpiarTabs">
-    <TabPanel :disabled="!estadoCaja">
+    <TabPanel>
       <template #header>
         <div class="flex align-items-center gap-2">
           <i class="pi pi-plus"></i>
-          <span class="text-subtitle">Pedido</span>
+          <span class="text-subtitle">Ingresos</span>
         </div>
       </template>
       <div class="grid">
@@ -14,31 +14,21 @@
           <AutoComplete id="sucursales" :disabled="view" class="w-12" placeholder="Sucursal:"
                         v-model="nuevoRegistro.sucursalId" :suggestions="sucursalArray" @complete="searchSucursal"
                         dropdown
-                        @keypress.enter="getMesas" @input="getMesas" field="label"/>
+                        field="label"/>
         </div>
         <div class="col-6">
-          <AutoComplete id="mesas" :disabled="esDelivery" class="w-12" placeholder="Mesas:" v-model="nuevoRegistro.mesaId"
-                        :suggestions="mesaArray" @complete="searchMesas" dropdown field="label"/>
+          <AutoComplete id="forma_pago" :disabled="view" class="w-12" placeholder="Forma de Pago:" v-model="nuevoRegistro.formaPagoId"
+                        :suggestions="formaPagoArray" @complete="searchFormaPago" dropdown field="label" />
+        </div>
+        <div class="col-6">
+          <AutoComplete id="proveedor" :disabled="view" class="w-12" placeholder="Proveedor:" v-model="nuevoRegistro.proveedorId"
+                        :suggestions="proveedorArray" @complete="searchProveedor" dropdown field="label" />
         </div>
         <div class="col-6">
           <Button icon="pi pi-eye" class="boton-verde" @click="mostrarDialogo = true" v-tooltip="'Ver items'"/>
           <InputText :disabled="view" id="Código Barra" class="w-10" v-model="nuevoRegistro.busqueda"
                      placeholder="Busca Plato/Producto:" @keypress.enter="abreMenuItems(nuevoRegistro.busqueda)"
-                     @input="convertToUppercase"
                      @change="abreMenuItems(nuevoRegistro.busqueda)"/>
-        </div>
-        <div class="col-6">
-          <AutoComplete id="menus" :disabled="view" class="w-12" placeholder="Menú:" v-model="nuevoRegistro.menuId"
-                        :suggestions="menuArray" @complete="searchMenus" dropdown
-                        @keypress.enter="procesarMenuDetalle(nuevoRegistro.menuId.value)"
-                        @input="procesarMenuDetalle(nuevoRegistro.menuId.value)" field="label"/>
-        </div>
-
-        <div class="col-6">
-          <Checkbox v-model="esDelivery" indeterminate binary />
-          <label for="ingredient1" class="ml-2">
-            <i class="fas fa-bicycle" style="font-size: 1.5rem"></i> Es delivery?
-          </label>
         </div>
         <br>
         <Dialog :header="'Items'" v-model:visible="mostrarDialogo" style="width: 90%;"
@@ -82,7 +72,7 @@
                         <div class="flex flex-column md:align-items-end gap-5">
                           <span class="text-xl font-semibold text-900">${{ item.precio }}</span>
                           <div class="flex flex-row-reverse md:flex-row gap-2">
-                            <Button icon="pi pi-shopping-cart" label="Añadir" :disabled="item.existencias <= 0"
+                            <Button icon="pi pi-shopping-cart" label="Añadir"
                                     class="flex-auto md:flex-initial white-space-nowrap"
                                     @click="agregarDetalle(item)"></Button>
                           </div>
@@ -101,10 +91,10 @@
           <Column field="options" header="Options">
             <template #body="slotProps">
               <div class="option-buttons">
-                <Button v-if="!slotProps.data.id_pedido_det" icon="pi pi-trash" class="boton-rojo"
+                <Button v-if="!slotProps.data.id_compra_det" icon="pi pi-trash" class="boton-rojo"
                         @click="eliminarDetalle(slotProps.data)"></Button>
-                <Button v-if="slotProps.data.id_pedido_det" icon="pi pi-times" class="boton-rojo"
-                        @click="eliminarDetalleRegistrado(slotProps.data)" v-tooltip="'Eliminar del pedido.'"></Button>
+                <Button v-if="slotProps.data.id_compra_det" icon="pi pi-times" class="boton-rojo"
+                        @click="eliminarDetalleRegistrado(slotProps.data)" v-tooltip="'Eliminar del Compra.'"></Button>
               </div>
 
             </template>
@@ -123,7 +113,7 @@
           <Column field="cantidad" header="Cantidad">
             <template #body="slotProps">
               <InputNumber v-model="slotProps.data.cantidad" showButtons buttonLayout="horizontal" :min="0"
-                           :max="slotProps.data.existencias" @input="calculoValTotales">
+                            @input="calculoValTotales">
                 <template #incrementbuttonicon>
                   <span class="pi pi-plus"/>
                 </template>
@@ -137,14 +127,6 @@
             <template #body="slotProps">
               <div v-if="slotProps.data.existencias">
                 {{ slotProps.data.existencias }}
-              </div>
-              <div v-else>No data.</div>
-            </template>
-          </Column>
-          <Column field="tiempo" header="Tiempo">
-            <template #body="slotProps">
-              <div v-if="slotProps.data.tiempo">
-                {{ formtatStringTime(slotProps.data.tiempo) }}
               </div>
               <div v-else>No data.</div>
             </template>
@@ -166,11 +148,11 @@
           <SplitterPanel class="flex align-items-center justify-content-center" :size="60">
             <table>
               <tr>
-                <span class="text-subtitle">Tiempo de Preparación</span>
+                <span class="text-subtitle"></span>
               </tr>
               <tr>
-                <td style="text-align: right;"><span>Tiempo apróx.</span></td>
-                <td style="text-align: right;">{{ sumaTiemposPreparacion }}min.</td>
+                <td style="text-align: right;"></td>
+                <td style="text-align: right;"></td>
               </tr>
             </table>
           </SplitterPanel>
@@ -204,19 +186,10 @@
       <div class="grid">
         <div class="col-1">
           <Button v-if="!view && !update" label="" icon="pi pi-check" class="p-button-success"
-                  v-tooltip="'Guardar Pedido.'"
-                  @click="guardarPedido"></Button>
+                  v-tooltip="'Guardar ingreso.'"
+                  @click="guardarCompra"></Button>
         </div>
-        <div class="col-1">
-          <Button v-if="!view && !update" label="" icon="pi pi-send" class="p-button-info"
-                  v-tooltip="'Guardar y enviar a facturar.'"
-                  @click="guardaryfacturarPedido"></Button>
-        </div>
-        <div class="col-1">
-          <Button v-if="update" label="" icon="pi pi-pencil" class="p-button-warning"
-                  v-tooltip="'Editar Pedido.'"
-                  @click="actualizarPedido"></Button>
-        </div>
+
       </div>
 
     </TabPanel>
@@ -224,7 +197,7 @@
       <template #header>
         <div class="flex align-items-center gap-2">
           <i class="pi pi-history"></i>
-          <span class="text-subtitle">Lista de Pedidos</span>
+          <span class="text-subtitle">Lista de Compras</span>
         </div>
       </template>
       <div class="grid">
@@ -232,64 +205,39 @@
           <AutoComplete id="sucursales" :disabled="view" class="w-12" placeholder="Sucursal:"
                         v-model="busquedaJson.sucursalId" :suggestions="sucursalArray" @complete="searchSucursal"
                         dropdown
-                        @keypress.enter="listarPedido(estado_pedido,busquedaJson.sucursalId)" @input="getMesas"
+                        @keypress.enter="listarCompra(estado_Compra,busquedaJson.sucursalId)" @input="getMesas"
                         field="label"
-                        @change="listarPedido(estado_pedido,busquedaJson.sucursalId)"
+                        @change="listarCompra(estado_Compra,busquedaJson.sucursalId)"
           />
         </div>
         <div class="col-12 md:col-6 lg:col-3 xl:col-3">
-          <AutoComplete id="estado_pedido" class="w-9" placeholder="Filtra por estados:" v-model="estado_pedido"
-                        :suggestions="estados_pedidos" @complete="searchEstadosPedidos"
-                        @keypress.enter="listarPedido(estado_pedido,busquedaJson.sucursalId)"
-                        @change="listarPedido(estado_pedido,busquedaJson.sucursalId)"
+          <AutoComplete id="estado_Compra" class="w-9" placeholder="Filtra por estados:" v-model="estado_Compra"
+                        :suggestions="estados_facturas" @complete="searchEstadosCompras"
+                        @keypress.enter="listarCompra(estado_Compra,busquedaJson.sucursalId)"
+                        @change="listarCompra(estado_Compra,busquedaJson.sucursalId)"
                         dropdown/>
         </div>
-        <div class="col-12 md:col-6 lg:col-3 xl:col-3">
-        <Calendar v-model="dates" selectionMode="range" :manualInput="false" />
-        </div>
-        <div class="col-12 md:col-6 lg:col-3 xl:col-3">
-          <Button icon="pi pi-search" severity="success" rounded aria-label="Search" @click="listarPedido(estado_pedido,busquedaJson.sucursalId,dates)" />
-        </div>
-
-
       </div>
       <div>
-        <DataTable :value="datosPedidos" class="responsive-datatable">
+        <DataTable :value="datosCompras" class="responsive-datatable">
           <Column field="options" header="Options">
             <template #body="slotProps">
               <div class="option-buttons">
-                <Button v-if="['En Proceso', 'En Espera', 'Pendiente'].includes(slotProps.data.estado)"
-                        icon="pi pi-send" color="boton-azul" @click="facturarPedido(slotProps.data)"
-                        v-tooltip="'Enviar a Facturar'"></Button>
-                <Button v-if="['En Proceso', 'En Espera', 'Pendiente'].includes(slotProps.data.estado)"
-                        icon="pi pi-pencil" class="boton-verde" @click="editarPedido(slotProps.data)"
-                        v-tooltip="'Editar pedido'"></Button>
-                <Button v-if="['En Proceso', 'En Espera', 'Pendiente'].includes(slotProps.data.estado)"
-                        icon="pi pi-times" class="boton-marron" @click="anularPedido(slotProps.data)"
-                        v-tooltip="'Anular Pedido'"></Button>
-                <Button v-if="['En Proceso', 'En Espera', 'Pendiente'].includes(slotProps.data.estado)"
+
+                <Button v-if="['Activo'].includes(slotProps.data.estado)"
+                        icon="pi pi-eye" class="boton-verde" @click="editarCompra(slotProps.data)"
+                        v-tooltip="'Editar Compra'"></Button>
+                <Button v-if="['Activo'].includes(slotProps.data.estado)"
                         icon="pi pi-trash"
                         class="boton-rojo"
-                        @click="cancelarPedido(slotProps.data)"
-                        v-tooltip="'Cancelar Pedido'">
+                        @click="cancelarCompra(slotProps.data)"
+                        v-tooltip="'Cancelar Compra'">
                 </Button>
-                <Button v-if="['Anulado'].includes(slotProps.data.estado)" icon="pi pi-history" class="boton-naranja"
-                        @click="restaurarPedidoAnulado(slotProps.data)" v-tooltip="'Restaurar pedido'"></Button>
               </div>
             </template>
           </Column>
-          <Column field="id_pedido" header="Numero Orden"></Column>
-          <Column field="numero_mesa" header="Numero Mesa">
-            <template #body="slotProps">
-              <div v-if="slotProps.data.mesa_id === null">
-                Es delivery. <i class="fas fa-bicycle" style="font-size: 1.5rem"></i>
-              </div>
-              <div v-else>
-                  {{slotProps.data.numero_mesa}}
-              </div>
-            </template>
-          </Column>
-          <Column field="usuario" header="Usr. Creacion"></Column>
+          <Column field="id_compra" header="Numero Ingreso"></Column>
+          <Column field="total_factura" header="Total Factura"></Column>
           <Column field="estado" header="Estado"></Column>
         </DataTable>
       </div>
@@ -317,18 +265,13 @@ import Tooltip from 'primevue/tooltip';
 import infoPlatoService from '@/components/services/infoPlatosService';
 import infoProductoService from '@/components/services/infoProductoService';
 import admiImpuestoService from '@/components/services/admiImpuestosService';
-import infoPedidoService from '@/components/services/infoPedidosService';
-import infoPedidoDetService from '@/components/services/infoPedidosDetService';
+import infoCompraService from '@/components/services/infoComprasService';
+import infoCompraDetService from '@/components/services/infoComprasDetService';
 import admiParametrosService from "@/components/services/admiParametrosService.js";
-import infoArqueoCajaEmpleadoService from "@/components/services/infoArqueoCajaEmpleadoService.js";
-import {api} from "@/api.js";
-import Calendar from 'primevue/calendar';
-import moment from "moment";
-import Checkbox from "primevue/checkbox";
 
 
 export default {
-  name: 'InfoPedido',
+  name: 'infoCompra',
   components: {
     DataTable,
     Column,
@@ -345,20 +288,18 @@ export default {
     Splitter,
     SplitterPanel,
     Dropdown,
-    Tooltip,
-    Calendar,
-    Checkbox
+    Tooltip
   },
   created() {
-    this.listarPedido();
-    this.buscaPlatoProducto();
+    this.listarCompra();
     this.getSucursal();
     this.getMenus();
-    this.getEstadosPedidos();
-    this.comprobarEstadoCaja();
+    this.getEstadosCompras();
+    this.getFormasPagos();
+    this.getProveedor();
 
     if (this.params.sucursal_id) {
-      this.cargaDataParaPedido(this.params);
+      this.cargaDataParaCompra(this.params);
     }
   },
   data() {
@@ -367,30 +308,31 @@ export default {
       endPointMesas: "/infoMesa",
       endPointMenu: "/infoMenu",
       endPointMenuDet: "/infoMenuDet",
-      endPointPedido: "/infoPedido",
-      endPointPedidoDet: "/infoPedidoDet",
+      endPointCompra: "/infoCompra",
+      endPointCompraDet: "/infoCompraDet",
+      endPointFormaPago: "/admiFormaPago",
+      endPointProveedor: "/infoProveedor",
       datos: [],
-      datosPedidos: [],
+      datosCompras: [],
       sucursal_id: this.$store.state.empleado.sucursal_id,
       rolesAdmin: ['ADMINISTRADOR-SISTEMA', 'ADMINISTRADOR-RESTAURANTE'],
-      nuevoRegistro: {mesaId: null, sucursalId: null},
+      nuevoRegistro: {formaPagoId: null, sucursalId: null, proveedorId: null},
       busquedaJson: {},
       mostrarDialogo: false,
       items: [],
       sucursalArray: [],
+      formaPagoArray: [],
+      proveedorArray: [],
       mesaArray: [],
       menuArray: [],
       valSubtotal: 0,
       valSubtotal12: 0,
       valSubtotal15: 0,
       valTotal: 0,
-      estados_pedidos: [],
-      estado_pedido: "",
+      estados_facturas: [],
+      estado_Compra: "",
       update: false,
       activeIndex: 1,
-      estadoCaja:false,
-      dates:null,
-      esDelivery:false,
     }
   },
   props: {
@@ -400,15 +342,6 @@ export default {
     }
   },
   computed: {
-    sumaTiemposPreparacion() {
-      let sum = 0;
-      for (const element of this.datos) {
-        if (typeof element.tiempo === 'number') {
-          sum += element.tiempo;
-        }
-      }
-      return sum;
-    },
     rolesAdmin() {
       return ['ADMINISTRADOR-SISTEMA', 'ADMINISTRADOR-RESTAURANTE'];
     },
@@ -421,33 +354,7 @@ export default {
   mounted() {
   },
   methods: {
-    convertToUppercase(event) {
-      this.nuevoRegistro.busqueda = event.target.value.toUpperCase();
-    },
-    async comprobarEstadoCaja(){
-      const empleado_caja = this.$store.state.cajas[0];
-      if(empleado_caja){
-        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-        if(response.estado==='Activo'){
-          this.estadoCaja=true;
-        }else if(response.estado==='Finalizado'){
-          this.estadoCaja=false;
-          this.$swal.fire({
-            icon: "warning",
-            title: "Ups 😢",
-            text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
-          });
-        }
-      }else{
-        this.estadoCaja=false;
-        this.$swal.fire({
-          icon: "warning",
-          title: "Ups 😢",
-          text: `No se ha encontrado un arqueo para caja hoy!`,
-        });
-      }
-    },
-    async cargaDataParaPedido(params) {
+    async cargaDataParaCompra(params) {
       this.activeIndex = 0;
       await this.getMesas(params);
       await this.getSucursal();
@@ -473,75 +380,9 @@ export default {
         this.nuevoRegistro.sucursalId.label = sucursalEncontrada.nombre;
       }
     },
-    async guardaryfacturarPedido() {
+    async facturarCompra(item) {
       try {
-        let bandera = false;
-        let requestPedido = {};
-        if (this.esAdminSistema) {
-          requestPedido.sucursal_id = this.nuevoRegistro.sucursalId.value;
-        } else {
-          requestPedido.sucursal_id = this.sucursal_id;
-        }
-        if(!this.esDelivery){
-          requestPedido.mesa_id = this.nuevoRegistro.mesaId.value;
-        }else{
-          requestPedido.mesa_id = null;
-        }
-        requestPedido.empleado_id = this.$store.state.empleado.empleado_id;
-        requestPedido.estado = 'Pendiente';
-        requestPedido.total = parseFloat(this.valTotal);
-        requestPedido.total_impuesto = parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
-        requestPedido.usuario_creacion = this.$store.state.empleado.usuario;
-        requestPedido.usuario_modificacion = this.$store.state.empleado.usuario;
-
-        const responsePedido = await infoPedidoService.insert(this.$api, requestPedido);
-        const resPedido = responsePedido.data;
-        if (responsePedido.success === true) {
-          for (const element of this.datos) {
-
-            let requestPedidoDet = {};
-
-            const responseImpuesto = await admiImpuestoService.getById(this.$api, element.impuesto_id);
-            const subUni = parseInt(element.cantidad) * parseFloat(element.precio);
-            const imp = (subUni * responseImpuesto.porcentaje) / 100;
-
-            requestPedidoDet.pedido_id = resPedido.id_pedido;
-            requestPedidoDet.subtotal_impuesto = imp;
-            requestPedidoDet.precio_unitario = parseFloat(element.precio);
-            requestPedidoDet.total_detalle = subUni;
-            requestPedidoDet.cantidad = element.cantidad;
-            requestPedidoDet.estado = 'Pendiente';
-            requestPedidoDet.usuario_creacion = this.$store.state.empleado.usuario;
-            requestPedidoDet.usuario_modificacion = this.$store.state.empleado.usuario;
-
-            if (element.id_producto) {
-              requestPedidoDet.producto_id = element.id_producto;
-            }
-            if (element.id_plato) {
-              requestPedidoDet.plato_id = element.id_plato;
-            }
-            if (element.menu_id) {
-              requestPedidoDet.menu_id = element.menu_id;
-            }
-
-
-            const responsePedidoDet = await infoPedidoDetService.insert(this.$api, requestPedidoDet);
-            if (responsePedidoDet.success === true) {
-              bandera = true;
-            }
-
-          }
-          if (bandera) {
-            this.$router.push({name: 'info-facturas', params: {pedido_id: resPedido.id_pedido}});
-          }
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    async facturarPedido(item) {
-      try {
-        this.$router.push({name: 'info-facturas', params: {pedido_id: item.id_pedido}});
+        this.$router.push({name: 'info-facturas', params: {compra_id: item.id_compra}});
       } catch (e) {
         console.error(e);
         const data = e.response?.data;
@@ -554,32 +395,32 @@ export default {
     },
     async eliminarDetalleRegistrado(dato) {
       try {
-        let requestPedidoDet = {};
+        let requestCompraDet = {};
 
         const responseImpuesto = await admiImpuestoService.getById(this.$api, dato.impuesto_id);
         const subUni = parseInt(dato.cantidad) * parseFloat(dato.precio);
         const imp = (subUni * responseImpuesto.porcentaje) / 100;
 
-        requestPedidoDet.subtotal_impuesto = imp;
-        requestPedidoDet.precio_unitario = parseFloat(dato.precio);
-        requestPedidoDet.total_detalle = subUni;
-        requestPedidoDet.cantidad = dato.cantidad;
-        requestPedidoDet.estado = 'Eliminado';
-        requestPedidoDet.usuario_modificacion = this.$store.state.empleado.usuario;
+        requestCompraDet.subtotal_impuesto = imp;
+        requestCompraDet.precio_unitario = parseFloat(dato.precio);
+        requestCompraDet.total_detalle = subUni;
+        requestCompraDet.cantidad = dato.cantidad;
+        requestCompraDet.estado = 'Eliminado';
+        requestCompraDet.usuario_modificacion = this.$store.state.empleado.usuario;
 
         if (dato.id_producto) {
-          requestPedidoDet.producto_id = dato.id_producto;
+          requestCompraDet.producto_id = dato.id_producto;
         }
         if (dato.id_plato) {
-          requestPedidoDet.plato_id = dato.id_plato;
+          requestCompraDet.plato_id = dato.id_plato;
         }
         if (dato.menu_id) {
-          requestPedidoDet.menu_id = dato.menu_id;
+          requestCompraDet.menu_id = dato.menu_id;
         }
-        requestPedidoDet.id_pedido_det = dato.id_pedido_det;
-        requestPedidoDet.pedido_id = this.nuevoRegistro.id_pedido;
-        const responseEditPedidoDet = await infoPedidoDetService.update(this.$api, dato.id_pedido_det, requestPedidoDet);
-        if (responseEditPedidoDet.success === true) {
+        requestCompraDet.id_compra_det = dato.id_compra_det;
+        requestCompraDet.compra_id = this.nuevoRegistro.id_compra;
+        const responseEditCompraDet = await infoCompraDetService.update(this.$api, dato.id_compra_det, requestCompraDet);
+        if (responseEditCompraDet.success === true) {
           this.datos = this.datos.filter(item => item.nombre !== dato.nombre);
         }
       } catch (e) {
@@ -592,52 +433,52 @@ export default {
         });
       }
     },
-    async actualizarPedido() {
+    async actualizarCompra() {
       try {
         this.nuevoRegistro.total = parseFloat(this.valTotal);
         this.nuevoRegistro.total_impuesto = parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
 
-        const responseEditPedido = await infoPedidoService.update(this.$api, this.nuevoRegistro.id_pedido, this.nuevoRegistro);
-        if (responseEditPedido) {
+        const responseEditCompra = await infoCompraService.update(this.$api, this.nuevoRegistro.id_compra, this.nuevoRegistro);
+        if (responseEditCompra) {
           let bandera = false;
           for (const dato of this.datos) {
-            let requestPedidoDet = {};
+            let requestCompraDet = {};
 
             const responseImpuesto = await admiImpuestoService.getById(this.$api, dato.impuesto_id);
             const subUni = parseInt(dato.cantidad) * parseFloat(dato.precio);
             const imp = (subUni * responseImpuesto.porcentaje) / 100;
 
-            requestPedidoDet.subtotal_impuesto = imp;
-            requestPedidoDet.precio_unitario = parseFloat(dato.precio);
-            requestPedidoDet.total_detalle = subUni;
-            requestPedidoDet.cantidad = dato.cantidad;
-            requestPedidoDet.estado = 'Pendiente';
-            requestPedidoDet.usuario_modificacion = this.$store.state.empleado.usuario;
+            requestCompraDet.subtotal_impuesto = imp;
+            requestCompraDet.precio_unitario = parseFloat(dato.precio);
+            requestCompraDet.total_detalle = subUni;
+            requestCompraDet.cantidad = dato.cantidad;
+            requestCompraDet.estado = 'Pendiente';
+            requestCompraDet.usuario_modificacion = this.$store.state.empleado.usuario;
 
             if (dato.id_producto) {
-              requestPedidoDet.producto_id = dato.id_producto;
+              requestCompraDet.producto_id = dato.id_producto;
             }
             if (dato.id_plato) {
-              requestPedidoDet.plato_id = dato.id_plato;
+              requestCompraDet.plato_id = dato.id_plato;
             }
             if (dato.menu_id) {
-              requestPedidoDet.menu_id = dato.menu_id;
+              requestCompraDet.menu_id = dato.menu_id;
             }
 
-            if (dato.id_pedido_det) {
+            if (dato.id_compra_det) {
               // Actualiza el detalle existente
-              requestPedidoDet.id_pedido_det = dato.id_pedido_det;
-              requestPedidoDet.pedido_id = this.nuevoRegistro.id_pedido;
-              const responseEditPedidoDet = await infoPedidoDetService.update(this.$api, dato.id_pedido_det, requestPedidoDet);
-              if (responseEditPedidoDet) {
+              requestCompraDet.id_compra_det = dato.id_compra_det;
+              requestCompraDet.compra_id = this.nuevoRegistro.id_compra;
+              const responseEditCompraDet = await infoCompraDetService.update(this.$api, dato.id_compra_det, requestCompraDet);
+              if (responseEditCompraDet) {
                 bandera = true;
               }
             } else {
               // Crea un nuevo detalle
-              requestPedidoDet.pedido_id = this.nuevoRegistro.id_pedido;
-              requestPedidoDet.usuario_creacion = this.$store.state.empleado.usuario;
-              const responseCreatePedidoDet = await infoPedidoDetService.insert(this.$api, requestPedidoDet);
-              if (responseCreatePedidoDet) {
+              requestCompraDet.compra_id = this.nuevoRegistro.id_compra;
+              requestCompraDet.usuario_creacion = this.$store.state.empleado.usuario;
+              const responseCreateCompraDet = await infoCompraDetService.insert(this.$api, requestCompraDet);
+              if (responseCreateCompraDet) {
                 bandera = true;
               }
             }
@@ -647,11 +488,11 @@ export default {
             this.$swal.fire({
               icon: "success",
               title: "¡Bien hecho!",
-              text: `Pedido actualizado.`,
+              text: `Compra actualizado.`,
             });
             this.activeIndex = 1;
             this.limpiar();
-            this.listarPedido('Pendiente', this.sucursal_id);
+            this.listarCompra('Pendiente', this.sucursal_id);
           }
         }
       } catch (e) {
@@ -664,32 +505,32 @@ export default {
         });
       }
     },
-    async editarPedido(item) {
+    async editarCompra(item) {
       try {
         this.nuevoRegistro = item;
         const params = {
-          pedido_id: item.id_pedido,
-          estado: 'Pendiente'
+          compra_id: item.id_compra,
+          estado: 'Activo'
         };
-        const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api, params);
-        if (responsePedidoDet) {
-          for (const responsePedidoDetElement of responsePedidoDet) {
-            if (responsePedidoDetElement.plato_id) {
-              const respPlato = await infoPlatoService.getById(this.$api, responsePedidoDetElement.plato_id);
+        const responseCompraDet = await infoCompraDetService.getByFilter(this.$api, params);
+        if (responseCompraDet) {
+          for (const responseCompraDetElement of responseCompraDet) {
+            if (responseCompraDetElement.plato_id) {
+              const respPlato = await infoPlatoService.getById(this.$api, responseCompraDetElement.plato_id);
               if (respPlato) {
-                respPlato.menu_id = responsePedidoDetElement.menu_id;
-                respPlato.cantidad = responsePedidoDetElement.cantidad;
-                respPlato.id_pedido_det = responsePedidoDetElement.id_pedido_det;
-                respPlato.pedido_id = responsePedidoDetElement.pedido_id;
+                respPlato.menu_id = responseCompraDetElement.menu_id;
+                respPlato.cantidad = responseCompraDetElement.cantidad;
+                respPlato.id_compra_det = responseCompraDetElement.id_compra_det;
+                respPlato.compra_id = responseCompraDetElement.compra_id;
                 this.datos.push(respPlato);
               }
-            } else if (responsePedidoDetElement.producto_id) {
-              const respProducto = await infoProductoService.getById(this.$api, responsePedidoDetElement.producto_id);
+            } else if (responseCompraDetElement.producto_id) {
+              const respProducto = await infoProductoService.getById(this.$api, responseCompraDetElement.producto_id);
               if (respProducto) {
-                respProducto.menu_id = responsePedidoDetElement.menu_id;
-                respProducto.cantidad = responsePedidoDetElement.cantidad;
-                respProducto.id_pedido_det = responsePedidoDetElement.id_pedido_det;
-                respProducto.pedido_id = responsePedidoDetElement.pedido_id;
+                respProducto.menu_id = responseCompraDetElement.menu_id;
+                respProducto.cantidad = responseCompraDetElement.cantidad;
+                respProducto.id_compra_det = responseCompraDetElement.id_compra_det;
+                respProducto.compra_id = responseCompraDetElement.compra_id;
                 this.datos.push(respProducto);
               }
             }
@@ -708,18 +549,28 @@ export default {
         });
       }
     },
-    async anularPedido(item) {
+    async anularCompra(item) {
       try {
         item.estado = "Anulado";
-        const response = await infoPedidoService.update(this.$api, item.id_pedido, item);
+        const response = await infoCompraService.update(this.$api, item.id_compra, item);
         if (response.success === true) {
+          const params = {
+            compra_id: item.id_compra,
+          }
+          const responseDet = await infoCompraDetService.getByFilter(this.$api, params);
+          if (responseDet) {
+            for (const responseDetElement of responseDet) {
+              responseDetElement.estado = "Anulado";
+              await infoCompraDetService.update(this.$api, responseDetElement.id_compra_det,responseDetElement);
+            }
+          }
           this.$swal.fire({
             icon: "success",
             title: "Actualizado",
             text: "Registro actualizado exitosamente!",
             timer: 2000
           });
-          this.listarPedido('Pendiente', this.sucursal_id);
+          this.listarCompra('Pendiente', this.sucursal_id);
         }
       } catch (e) {
         console.error(e);
@@ -731,18 +582,28 @@ export default {
         });
       }
     },
-    async cancelarPedido(item) {
+    async cancelarCompra(item) {
       try {
         item.estado = "Cancelado";
-        const response = await infoPedidoService.update(this.$api, item.id_pedido, item);
+        const response = await infoCompraService.update(this.$api, item.id_compra, item);
         if (response.success === true) {
+          const params = {
+            compra_id: item.id_compra,
+          }
+          const responseDet = await infoCompraDetService.getByFilter(this.$api, params);
+          if (responseDet) {
+            for (const responseDetElement of responseDet) {
+              responseDetElement.estado = "Cancelado";
+              await infoCompraDetService.update(this.$api, responseDetElement.id_compra_det,responseDetElement);
+            }
+          }
           this.$swal.fire({
             icon: "success",
             title: "Actualizado",
             text: "Registro actualizado exitosamente!",
             timer: 2000
           });
-          this.listarPedido('Pendiente', this.sucursal_id);
+          this.listarCompra('Activo', this.sucursal_id);
         }
       } catch (e) {
         console.error(e);
@@ -754,10 +615,10 @@ export default {
         });
       }
     },
-    async restaurarPedidoAnulado(item) {
+    async restaurarCompraAnulado(item) {
       try {
         item.estado = "Pendiente";
-        const response = await infoPedidoService.update(this.$api, item.id_pedido, item);
+        const response = await infoCompraService.update(this.$api, item.id_compra, item);
         if (response.success === true) {
           this.$swal.fire({
             icon: "success",
@@ -765,7 +626,7 @@ export default {
             text: "Registro actualizado exitosamente!",
             timer: 2000
           });
-          this.listarPedido('Pendiente', this.sucursal_id);
+          this.listarCompra('Activo', this.sucursal_id);
         }
       } catch (e) {
         console.error(e);
@@ -777,13 +638,13 @@ export default {
         });
       }
     },
-    async listarPedido(filtro = "", busqueda = {},dates = null) {
+    async listarCompra(filtro = "", busqueda = {}) {
       try {
         this.limpiar();
-        this.datosPedidos = [];
+        this.datosCompras = [];
         let params = {
           sucursal_id: this.sucursal_id,
-          estado: filtro || 'Pendiente'
+          estado: filtro || 'Activo'
         };
 
         if (this.esAdminSistema) {
@@ -792,22 +653,10 @@ export default {
           }
         }
 
-        if (dates && dates.length > 0) {
-          let fechaInicial = this.formatFecha(dates[0]);
-          let fechaFinal = dates.length > 1 ? this.formatFecha(dates[1]) : fechaInicial;
-
-          params.fecha_inicio = fechaInicial;
-          params.fecha_fin = fechaFinal;
-        } else {
-          let fechaActual = moment().format("YYYY-MM-DD");
-          params.fecha_inicio = fechaActual;
-          params.fecha_fin = fechaActual;
-        }
-
-        const response = await this.$api.post(`${this.endPointPedido}/filter`, params);
+        const response = await this.$api.post(`${this.endPointCompra}/filter`, params);
         const resp = response.data;
         if (resp.success === true) {
-          this.datosPedidos = resp.data;
+          this.datosCompras = resp.data;
         }
       } catch (e) {
         console.error(e);
@@ -817,14 +666,6 @@ export default {
           title: "Upss.. 😢",
           text: `Algo salió mal: ${data ? data.data : "Error desconocido"}`,
         });
-      }
-    },
-    formatFecha(fecha) {
-      const momentFecha = moment(fecha).utc();
-      if (momentFecha.isValid()) {
-        return momentFecha.format("YYYY-MM-DD");
-      } else {
-        return 'Fecha inválida';
       }
     },
     async calculoValTotales() {
@@ -862,60 +703,60 @@ export default {
         this.valTotal = (subtotal + subtotal12 + subtotal15).toFixed(2);
       }
     },
-    async guardarPedido() {
+    async guardarCompra() {
       try {
         let bandera = false;
-        let requestPedido = {};
+        let requestCompra = {};
         if (this.esAdminSistema) {
-          requestPedido.sucursal_id = this.nuevoRegistro.sucursalId.value;
+          requestCompra.sucursal_id = this.nuevoRegistro.sucursalId.value;
         } else {
-          requestPedido.sucursal_id = this.sucursal_id;
+          requestCompra.sucursal_id = this.sucursal_id;
         }
-        if(!this.esDelivery){
-          requestPedido.mesa_id = this.nuevoRegistro.mesaId.value;
-        }else{
-          requestPedido.mesa_id = null;
-        }
-        requestPedido.empleado_id = this.$store.state.empleado.empleado_id;
-        requestPedido.estado = 'Pendiente';
-        requestPedido.total = parseFloat(this.valTotal);
-        requestPedido.total_impuesto = parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
-        requestPedido.usuario_creacion = this.$store.state.empleado.usuario;
-        requestPedido.usuario_modificacion = this.$store.state.empleado.usuario;
+        requestCompra.forma_pago_id = this.nuevoRegistro.formaPagoId.value;
+        requestCompra.empleado_id = this.$store.state.empleado.empleado_id;
+        requestCompra.proveedor_id = this.nuevoRegistro.proveedorId.value;
 
-        const responsePedido = await infoPedidoService.insert(this.$api, requestPedido);
-        const resPedido = responsePedido.data;
-        if (responsePedido.success === true) {
+        requestCompra.estado = 'Activo';
+        requestCompra.total_factura = parseFloat(this.valTotal);
+        requestCompra.total_impuesto = parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
+        requestCompra.impuesto_total = parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
+        requestCompra.total_con_impuesto = parseFloat(this.valTotal) + parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
+        requestCompra.usuario_creacion = this.$store.state.empleado.usuario;
+        requestCompra.usuario_modificacion = this.$store.state.empleado.usuario;
+
+        const responseCompra = await infoCompraService.insert(this.$api, requestCompra);
+        const resCompra = responseCompra.data;
+        if (responseCompra.success === true) {
           for (const element of this.datos) {
 
-            let requestPedidoDet = {};
+            let requestCompraDet = {};
 
             const responseImpuesto = await admiImpuestoService.getById(this.$api, element.impuesto_id);
             const subUni = parseInt(element.cantidad) * parseFloat(element.precio);
             const imp = (subUni * responseImpuesto.porcentaje) / 100;
 
-            requestPedidoDet.pedido_id = resPedido.id_pedido;
-            requestPedidoDet.subtotal_impuesto = imp;
-            requestPedidoDet.precio_unitario = parseFloat(element.precio);
-            requestPedidoDet.total_detalle = subUni;
-            requestPedidoDet.cantidad = element.cantidad;
-            requestPedidoDet.estado = 'Pendiente';
-            requestPedidoDet.usuario_creacion = this.$store.state.empleado.usuario;
-            requestPedidoDet.usuario_modificacion = this.$store.state.empleado.usuario;
+            requestCompraDet.compra_id = resCompra.id_compra;
+            requestCompraDet.subtotal_impuesto = imp;
+            requestCompraDet.precio_unitario = parseFloat(element.precio);
+            requestCompraDet.total_detalle = subUni;
+            requestCompraDet.cantidad = element.cantidad;
+            requestCompraDet.estado = 'Activo';
+            requestCompraDet.usuario_creacion = this.$store.state.empleado.usuario;
+            requestCompraDet.usuario_modificacion = this.$store.state.empleado.usuario;
 
             if (element.id_producto) {
-              requestPedidoDet.producto_id = element.id_producto;
+              requestCompraDet.producto_id = element.id_producto;
             }
             if (element.id_plato) {
-              requestPedidoDet.plato_id = element.id_plato;
+              requestCompraDet.plato_id = element.id_plato;
             }
             if (element.menu_id) {
-              requestPedidoDet.menu_id = element.menu_id;
+              requestCompraDet.menu_id = element.menu_id;
             }
 
 
-            const responsePedidoDet = await infoPedidoDetService.insert(this.$api, requestPedidoDet);
-            if (responsePedidoDet.success === true) {
+            const responseCompraDet = await infoCompraDetService.insert(this.$api, requestCompraDet);
+            if (responseCompraDet.success === true) {
               bandera = true;
             }
 
@@ -927,65 +768,11 @@ export default {
               text: `Guardado!`,
             });
             this.limpiar();
-            this.listarPedido('Pendiente', this.sucursal_id)
+            this.listarCompra('Activo', this.sucursal_id)
           }
         }
       } catch (error) {
         console.error(error);
-      }
-    },
-    async procesarMenuDetalle(item) {
-      try {
-        let params = {};
-        params.menu_id = item;
-        params.estado = "Activo";
-        const response = await this.$api.post(`${this.endPointMenuDet}/filter`, params);
-        const res = response.data;
-        if (res.success === true) {
-          for (const element of res.data) {
-            if (element.plato_id) {
-              const respPlato = await infoPlatoService.getById(this.$api, element.plato_id);
-              if (respPlato) {
-                respPlato.menu_id = element.menu_id;
-                respPlato.cantidad = 1;
-                this.datos.push(respPlato);
-              }
-            } else if (element.producto_id) {
-              const respProducto = await infoProductoService.getById(this.$api, element.producto_id);
-              if (respProducto) {
-                respProducto.cantidad = 1;
-                respProducto.menu_id = element.menu_id;
-                this.datos.push(respProducto);
-              }
-            }
-          }
-          this.calculoValTotales();
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async searchMenus(event) {
-      try {
-        const response = await this.$api.get(`${this.endPointMenu}`);
-        const data = response.data;
-        const filter = data.data.filter(param =>
-            param.nombre.toLowerCase().includes(event.query.toLowerCase())
-        );
-        this.menuArray = filter.map(param => {
-          return {
-            label: param.nombre,
-            value: param.id_menu
-          };
-        });
-      } catch (error) {
-        const data = error;
-        console.error(data);
-        this.$swal.fire({
-          icon: "error",
-          title: "Upss.. 😢" + data.status,
-          text: `Algo salió mal: ${data.message}`,
-        });
       }
     },
     async getMenus() {
@@ -1003,44 +790,6 @@ export default {
           title: "Upss.. 😢",
           text: `Algo salió mal: ${data.data}`,
           timer: 2000,
-        });
-      }
-    },
-    async searchMesas(event) {
-      try {
-        let params = {};
-        if (this.esAdminSistema) {
-          if (this.nuevoRegistro.sucursalId) {
-            params.sucursal_id = this.nuevoRegistro.sucursalId.value;
-          } else {
-            this.$swal.fire({
-              title: "Error",
-              text: "Debe seleccionar una sucursal.",
-              timer: 2000,
-              icon: "error"
-            })
-          }
-        } else {
-          params.sucursal_id = this.sucursal_id;
-        }
-        params.estado = "Disponible";
-        const response = await this.$api.post(`${this.endPointMesas}/filter`, params);
-        const data = response.data;
-        const filter = data.data.filter(param =>
-            param.numero_mesa.toString().includes(event.query)
-        );
-        this.mesaArray = filter.map(param => {
-          return {
-            label: param.numero_mesa,
-            value: param.id_mesa
-          };
-        });
-      } catch (error) {
-        const data = error.response.data;
-        this.$swal.fire({
-          icon: "error",
-          title: "Upss.. 😢",
-          text: `No hay mesas disponibles.`,
         });
       }
     },
@@ -1125,11 +874,11 @@ export default {
         });
       }
     },
-    async searchEstadosPedidos(event) {
+    async searchEstadosCompras(event) {
       try {
-        const params = {descripcion: "estados_pedidos", estado: "Activo"};
+        const params = {descripcion: "estados_sistemas", estado: "Activo"};
         const data = await admiParametrosService.getbyfilterCab(this.$api, params)
-        this.estados_pedidos = data.filter(param =>
+        this.estados_facturas = data.filter(param =>
             param.valor.toLowerCase().includes(event.query.toLowerCase()) ||
             param.clave.toLowerCase().includes(event.query.toLowerCase())
         ).map(param => param.valor);
@@ -1143,12 +892,12 @@ export default {
         });
       }
     },
-    async getEstadosPedidos() {
+    async getEstadosCompras() {
       try {
-        const params = {descripcion: "estados_pedidos", estado: "Activo"};
+        const params = {descripcion: "estados_sistemas", estado: "Activo"};
         const respuesta = await admiParametrosService.getbyfilterCab(this.$api, params)
         if (respuesta.success === true) {
-          this.estados_pedidos = respuesta.data;
+          this.estados_facturasd = respuesta.data;
         }
       } catch (e) {
         const data = e.response.data;
@@ -1177,7 +926,6 @@ export default {
         item.cantidad = 1;
         this.datos.push(item);
         this.calculoValTotales();
-        this.nuevoRegistro.filtraBusqueda="";
       }
     },
     async buscaPlatoProducto(item) {
@@ -1230,9 +978,6 @@ export default {
       const roles = this.$store.state.roles;
       return roles;
     },
-    formtatStringTime(value) {
-      return `${value}min.`;
-    },
     formatCurrency(value) {
       let numberValue = Number(value);
       if (isNaN(numberValue)) {
@@ -1251,6 +996,92 @@ export default {
     },
     limpiarTabs() {
       this.limpiar()
+    },
+    async searchFormaPago(event) {
+      try {
+        let params = {};
+        params.estado = "Activo";
+        const response = await this.$api.post(`${this.endPointFormaPago}/filter`, params);
+        const data = response.data;
+        const filter = data.data.filter(param =>
+            param.nombre.toString().includes(event.query)
+        );
+        this.formaPagoArray = filter.map(param => {
+          return {
+            label: param.nombre,
+            value: param.id_forma_pago
+          };
+        });
+      } catch (error) {
+        const data = error.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `No hay mesas disponibles.`,
+        });
+      }
+    },
+    async getProveedor() {
+      try {
+        let params = {};
+        params.estado = "Activo";
+        const response = await this.$api.post(`${this.endPointProveedor}/filter`, params);
+        const respuesta = response.data;
+        if (respuesta.success === true) {
+          this.proveedorArray = respuesta.data;
+        }
+      } catch (e) {
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+          timer: 2000,
+        });
+      }
+    },
+    async searchProveedor(event) {
+      try {
+        let params = {};
+        params.estado = "Activo";
+        const response = await this.$api.post(`${this.endPointProveedor}/filter`, params);
+        const data = response.data;
+        const filter = data.data.filter(param =>
+            param.razon_social_proveedor.toString().includes(event.query)
+        );
+        this.proveedorArray = filter.map(param => {
+          return {
+            label: param.razon_social_proveedor,
+            value: param.id_proveedor
+          };
+        });
+      } catch (error) {
+        const data = error.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `No hay mesas disponibles.`,
+        });
+      }
+    },
+    async getFormasPagos() {
+      try {
+        let params = {};
+        params.estado = "Activo";
+        const response = await this.$api.post(`${this.endPointFormaPago}/filter`, params);
+        const respuesta = response.data;
+        if (respuesta.success === true) {
+          this.formaPagoArray = respuesta.data;
+        }
+      } catch (e) {
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+          timer: 2000,
+        });
+      }
     },
   },
 }

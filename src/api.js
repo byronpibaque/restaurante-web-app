@@ -2,9 +2,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:10000/',
+  baseURL: 'https://restapp-9ke7.onrender.com/',
 });
 
-const apiSocket =  'http://localhost:10000';
+const apiSocket =  'https://restapp-9ke7.onrender.com';
 
 export {api,apiSocket};

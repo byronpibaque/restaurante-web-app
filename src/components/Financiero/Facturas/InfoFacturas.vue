@@ -2,7 +2,7 @@
   <span class="text-title">Facturas</span>
 
   <TabView :activeIndex.sync="activeIndex" @tab-change="limpiarTabs">
-    <TabPanel>
+    <TabPanel :disabled="!estadoCaja">
       <template #header>
         <div class="flex align-items-center gap-2">
           <i class="pi pi-plus"></i>
@@ -10,24 +10,28 @@
         </div>
       </template>
       <div class="grid">
-        <div class="col-6" v-if= "esAdminSistema">
-          <AutoComplete id="sucursales" :disabled="view" class="w-12" placeholder="Sucursal:"
-                        v-model="nuevoRegistro.sucursalId" :suggestions="sucursalArray" @complete="searchSucursal" dropdown
-                        field="label" />
+        <div v-if="esAdminSistema" class="col-6">
+          <AutoComplete id="sucursales" v-model="nuevoRegistro.sucursalId" :disabled="view" :suggestions="sucursalArray"
+                        class="w-12" dropdown field="label"
+                        placeholder="Sucursal:"
+                        @complete="searchSucursal"/>
         </div>
         <div class="col-6">
-          <AutoComplete id="mesas" :disabled="view" class="w-12" placeholder="Forma de Pago:" v-model="nuevoRegistro.formaPagoId"
-                        :suggestions="formaPagoArray" @complete="searchFormaPago" dropdown field="label" />
+          <AutoComplete id="mesas" v-model="nuevoRegistro.formaPagoId" :disabled="view" :suggestions="formaPagoArray"
+                        class="w-12"
+                        dropdown field="label" placeholder="Forma de Pago:" @complete="searchFormaPago"/>
         </div>
         <div class="col-6">
-          <Button icon="pi pi-plus" class="boton-azul" @click="openPersonaDialog" v-tooltip="'Agrega cliente nuevo'" />
-          <Button icon="pi pi-search" class="boton-verde" @click="buscaClientes(nuevoRegistro.busqueda)" v-tooltip="'Buscar cliente'" />
-          <InputText :disabled="view" id="Código Barra" class="w-10" v-model="nuevoRegistro.busqueda"
-                     placeholder="Busca Número Identificación:" @keypress.enter="buscaClientes(nuevoRegistro.busqueda)"/>
+          <Button v-tooltip="'Agrega cliente nuevo'" class="boton-azul" icon="pi pi-plus" @click="openPersonaDialog"/>
+          <Button v-tooltip="'Buscar cliente'" class="boton-verde" icon="pi pi-search"
+                  @click="buscaClientes(nuevoRegistro.busqueda)"/>
+          <InputText id="Código Barra" v-model="nuevoRegistro.busqueda" :disabled="view" class="w-10"
+                     placeholder="Busca Número Identificación:"
+                     @keypress.enter="buscaClientes(nuevoRegistro.busqueda)"/>
         </div>
         <div>
-          <AdmiPersonaDialog :registro="nuevoCliente" :headerTitle="'Nuevo Cliente'"
-                             ref="AdmiPersonaDialog"></AdmiPersonaDialog>
+          <AdmiPersonaDialog ref="AdmiPersonaDialog" :headerTitle="'Nuevo Cliente'"
+                             :registro="nuevoCliente"></AdmiPersonaDialog>
         </div>
       </div>
       <div>
@@ -35,8 +39,11 @@
           <Column field="options" header="Options">
             <template #body="slotProps">
               <div class="option-buttons">
-                <Button v-if="!slotProps.data.id_factura_det" icon="pi pi-trash" class="boton-rojo" @click="eliminarDetalle(slotProps.data)"></Button>
-                <Button v-if="slotProps.data.id_factura_det" icon="pi pi-times" class="boton-rojo" @click="eliminarDetalleRegistrado(slotProps.data)" v-tooltip="'Eliminar de la factura.'"></Button>
+                <Button v-if="!slotProps.data.id_factura_det" class="boton-rojo" icon="pi pi-trash"
+                        @click="eliminarDetalle(slotProps.data)"></Button>
+                <Button v-if="slotProps.data.id_factura_det" v-tooltip="'Eliminar de la factura.'" class="boton-rojo"
+                        icon="pi pi-times"
+                        @click="eliminarDetalleRegistrado(slotProps.data)"></Button>
               </div>
 
             </template>
@@ -54,13 +61,13 @@
           </Column>
           <Column field="cantidad" header="Cantidad">
             <template #body="slotProps">
-              <InputNumber v-model="slotProps.data.cantidad" showButtons buttonLayout="horizontal" :min="0"
-                           :max="slotProps.data.existencias" @input="calculoValTotales">
+              <InputNumber v-model="slotProps.data.cantidad" :max="slotProps.data.existencias" :min="0" buttonLayout="horizontal"
+                           showButtons @input="calculoValTotales">
                 <template #incrementbuttonicon>
-                  <span class="pi pi-plus" />
+                  <span class="pi pi-plus"/>
                 </template>
                 <template #decrementbuttonicon>
-                  <span class="pi pi-minus" />
+                  <span class="pi pi-minus"/>
                 </template>
               </InputNumber>
             </template>
@@ -78,50 +85,50 @@
       </div>
       <br>
       <div>
-        <Splitter style="height: 300px" class="mb-5">
-          <SplitterPanel class="flex align-items-center justify-content-center" :size="60">
+        <Splitter class="mb-5" style="height: 300px">
+          <SplitterPanel :size="60" class="flex align-items-center justify-content-center">
             <table>
               <tr>
                 <span class="text-subtitle">Información del cliente</span>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>Identificación:</span></td>
-                <td style="text-align: right;">{{this.clienteData.cliente.numero_identificacion}}</td>
+                <td class="text-negrita" style="text-align: right;"><span>Identificación:</span></td>
+                <td style="text-align: right;">{{ this.clienteData.cliente.numero_identificacion }}</td>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>Nombres:</span></td>
+                <td class="text-negrita" style="text-align: right;"><span>Nombres:</span></td>
                 <td style="text-align: right;">{{ this.clienteData.persona.nombre_pila }}</td>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>Email:</span></td>
+                <td class="text-negrita" style="text-align: right;"><span>Email:</span></td>
                 <td style="text-align: right;">{{ this.clienteData.persona.email }}</td>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>Cel:</span></td>
+                <td class="text-negrita" style="text-align: right;"><span>Cel:</span></td>
                 <td style="text-align: right;">{{ this.clienteData.persona.celular }}</td>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>Dirección:</span></td>
+                <td class="text-negrita" style="text-align: right;"><span>Dirección:</span></td>
                 <td style="text-align: right;">{{ this.clienteData.persona.direccion }}</td>
               </tr>
             </table>
           </SplitterPanel>
-          <SplitterPanel class="flex align-items-center justify-content-center" :size="40">
+          <SplitterPanel :size="40" class="flex align-items-center justify-content-center">
             <table>
               <tr>
                 <span class="text-subtitle">Totales</span>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>SubTotal</span></td>
-                <td style="text-align: right;" class="text-body">{{ valSubtotal }}</td>
+                <td class="text-negrita" style="text-align: right;"><span>SubTotal</span></td>
+                <td class="text-body" style="text-align: right;">{{ valSubtotal }}</td>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>SubTotal 12%</span></td>
-                <td style="text-align: right;" class="text-body">{{ valSubtotal12 }}</td>
+                <td class="text-negrita" style="text-align: right;"><span>SubTotal 12%</span></td>
+                <td class="text-body" style="text-align: right;">{{ valSubtotal12 }}</td>
               </tr>
               <tr>
-                <td style="text-align: right;" class="text-negrita"><span>SubTotal 15%</span></td>
-                <td style="text-align: right;" class="text-body">{{ valSubtotal15 }}</td>
+                <td class="text-negrita" style="text-align: right;"><span>SubTotal 15%</span></td>
+                <td class="text-body" style="text-align: right;">{{ valSubtotal15 }}</td>
               </tr>
               <tr>
                 <td style="text-align: right;"><span>Total</span></td>
@@ -135,8 +142,8 @@
       <br>
       <div class="grid">
         <div class="col-1">
-          <Button v-if="!view && !update" label="" icon="pi pi-check" class="p-button-success"
-                  v-tooltip="'Facturar.'"
+          <Button v-if="!view && !update" v-tooltip="'Facturar.'" class="p-button-success" icon="pi pi-check"
+                  label=""
                   @click="guardarFactura"></Button>
         </div>
       </div>
@@ -150,18 +157,21 @@
         </div>
       </template>
       <div class="grid">
-        <div class="col-12 md:col-6 lg:col-3 xl:col-3" v-if="esAdminSistema">
-          <AutoComplete id="sucursales" :disabled="view" class="w-12" placeholder="Sucursal:"
-                        v-model="busquedaJson.sucursalId" :suggestions="sucursalArray" @complete="searchSucursal" dropdown
-                        @keypress.enter="listarFacturas(estado_pedido,busquedaJson.sucursalId)" @input="getFormasPagos" field="label"
-                        @change="listarFacturas(estado_pedido,busquedaJson.sucursalId)"
+        <div v-if="esAdminSistema" class="col-12 md:col-6 lg:col-3 xl:col-3">
+          <AutoComplete id="sucursales" v-model="busquedaJson.sucursalId" :disabled="view" :suggestions="sucursalArray"
+                        class="w-12" dropdown field="label"
+                        placeholder="Sucursal:"
+                        @change="listarFacturas(estado_pedido,busquedaJson.sucursalId)" @complete="searchSucursal"
+                        @input="getFormasPagos"
+                        @keypress.enter="listarFacturas(estado_pedido,busquedaJson.sucursalId)"
           />
         </div>
         <div class="col-12 md:col-6 lg:col-3 xl:col-3">
-          <AutoComplete id="estado_pedido" class="w-9" placeholder="Filtra por estados:" v-model="estado_pedido"
-                        :suggestions="estados_facturas" @complete="searchEstadosFacturas" @keypress.enter="listarFacturas(estado_pedido,busquedaJson.sucursalId)"
+          <AutoComplete id="estado_pedido" v-model="estado_pedido" :suggestions="estados_facturas" class="w-9"
+                        dropdown placeholder="Filtra por estados:"
                         @change="listarFacturas(estado_pedido,busquedaJson.sucursalId)"
-                        dropdown />
+                        @complete="searchEstadosFacturas"
+                        @keypress.enter="listarFacturas(estado_pedido,busquedaJson.sucursalId)"/>
         </div>
       </div>
       <div>
@@ -169,20 +179,28 @@
           <Column field="options" header="Options">
             <template #body="slotProps">
               <div class="option-buttons">
-                <Button v-if="['En Proceso', 'En Espera', 'Guardada'].includes(slotProps.data.estado)" icon="pi pi-times" class="boton-marron" @click="anularFactura(slotProps.data)"  v-tooltip="'Anular Factura'"></Button>
-                <Button v-if="['En Proceso', 'En Espera','Autorizada', 'Guardada'].includes(slotProps.data.estado)" icon="pi pi-receipt" class="boton-azul" @click="descargarComprobantePdf(slotProps.data)"  v-tooltip="'Descargar PDF'"></Button>
+                <Button v-if="['En Proceso', 'En Espera', 'Guardada'].includes(slotProps.data.estado)"
+                        v-tooltip="'Anular Factura'" class="boton-marron" icon="pi pi-times"
+                        @click="anularFactura(slotProps.data)"></Button>
+                <Button v-if="['En Proceso', 'En Espera','Autorizada', 'Guardada'].includes(slotProps.data.estado)"
+                        v-tooltip="'Imprimir Recibo'" class="boton-azul" icon="pi pi-receipt"
+                        @click="descargarComprobantePdf(slotProps.data)"></Button>
+                <Button v-if="['En Proceso', 'En Espera','Autorizada', 'Guardada'].includes(slotProps.data.estado)"
+                        v-tooltip="'Descargar PDF'" class="boton-azul" icon="pi pi-receipt"
+                        @click="descargarPdfFactura(slotProps.data)"></Button>
               </div>
             </template>
           </Column>
           <Column field="pedido_id" header="N. Factura">
             <template #body="slotProps">
-              {{slotProps.data.id_factura }}
-              <Button icon="pi pi-eye" text rounded severity="success" aria-label="Filter" @click="verFactura(slotProps.data)" v-tooltip="'Ver factura'" />
+              {{ slotProps.data.id_factura }}
+              <Button v-tooltip="'Ver factura'" aria-label="Filter" icon="pi pi-eye" rounded severity="success"
+                      text @click="verFactura(slotProps.data)"/>
             </template>
           </Column>
           <Column field="pedido_id" header="N. Orden">
             <template #body="slotProps">
-              {{slotProps.data.pedido_id }}
+              {{ slotProps.data.pedido_id }}
             </template>
           </Column>
           <Column field="precio" header="Precio">
@@ -226,6 +244,12 @@ import admiPersonaService from "@/components/services/admiPersonasService.js";
 import infoPedidoService from "@/components/services/infoPedidosService.js";
 import infoPedidosDetService from "@/components/services/infoPedidosDetService.js";
 import AdmiPersonaDialog from "@/components/Administracion/options/AdmiPersonaDialog.vue";
+import infoArqueoCajaEmpleadoService from "@/components/services/infoArqueoCajaEmpleadoService.js";
+import {api} from "@/api.js";
+import generaPdfService from "@/components/services/generatePdfService.js";
+import moment from "moment";
+import admiFormaPagoService from "@/components/services/admiFormaPagoService.js";
+import infoCajaService from "@/components/services/infoCajaService.js";
 
 
 export default {
@@ -255,6 +279,7 @@ export default {
     this.getEstadosFacturas();
     this.buscaClientes('9999999999999');
     this.fetchPedido(this.$route.params.pedido_id);
+    this.comprobarEstadoCaja();
   },
   data() {
     return {
@@ -264,12 +289,13 @@ export default {
       endPointMenuDet: "/infoMenuDet",
       endPointPedido: "/infoPedido",
       endPointPedidoDet: "/infoPedidoDet",
+      endPointGeneraPdf: "/generapdf",
       datos: [],
       datosPedidos: [],
       sucursal_id: this.$store.state.empleado.sucursal_id,
       rolesAdmin: ['ADMINISTRADOR-SISTEMA', 'ADMINISTRADOR-RESTAURANTE'],
-      nuevoRegistro: {busqueda:'9999999999999'},
-      clienteData:{cliente:{},persona:{}},
+      nuevoRegistro: {busqueda: '9999999999999'},
+      clienteData: {cliente: {}, persona: {}},
       busquedaJson: {},
       mostrarDialogoCliente: false,
       items: [],
@@ -280,27 +306,28 @@ export default {
       valSubtotal12: 0,
       valSubtotal15: 0,
       valTotal: 0,
-      estados_facturas:[],
-      estado_pedido:"",
-      update:false,
-      view:false,
+      estados_facturas: [],
+      estado_pedido: "",
+      update: false,
+      view: false,
       activeIndex: 1,
       pedido: null,
-      nuevoCliente:{
-          id_persona: "",
-          tipo_documento: "",
-          numero_identificacion: "",
-          nombre: "",
-          apellido: "",
-          nombre_pila: "",
-          direccion: "",
-          email: "",
-          celular: "+593",
-          id_cliente:"",
-          razon_social:"",
-          estado: "",
-          usuario_creacion: "",
-          usuario_modificacion: "",
+      nuevoCliente: {
+        id_persona: "",
+        tipo_documento: "",
+        numero_identificacion: "",
+        nombre: "",
+        apellido: "",
+        nombre_pila: "",
+        direccion: "",
+        email: "",
+        celular: "+593",
+        id_cliente: "",
+        razon_social: "",
+        estado: "",
+        usuario_creacion: "",
+        usuario_modificacion: "",
+        estadoCaja: false,
       },
     }
   },
@@ -318,14 +345,37 @@ export default {
   mounted() {
   },
   methods: {
-   async verFactura(item){
-      const responseFormaPago = await this.$api.get(this.endPointFormaPago+'/'+item.forma_pago_id);
-      if(responseFormaPago.success=true){
+    async comprobarEstadoCaja() {
+      const empleado_caja = this.$store.state.cajas[0];
+      if (empleado_caja) {
+        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
+        if (response.estado === 'Activo') {
+          this.estadoCaja = true;
+        } else if (response.estado === 'Finalizado') {
+          this.estadoCaja = false;
+          this.$swal.fire({
+            icon: "warning",
+            title: "Ups 😢",
+            text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
+          });
+        }
+      } else {
+        this.estadoCaja = false;
+        this.$swal.fire({
+          icon: "warning",
+          title: "Ups 😢",
+          text: `No se ha encontrado un arqueo para caja hoy!`,
+        });
+      }
+    },
+    async verFactura(item) {
+      const responseFormaPago = await this.$api.get(this.endPointFormaPago + '/' + item.forma_pago_id);
+      if (responseFormaPago.success = true) {
         const respuesta = responseFormaPago.data;
       }
       this.fetchPedido(item.pedido_id);
-      this.view=true
-      this.activeIndex=0;
+      this.view = true
+      this.activeIndex = 0;
     },
     openPersonaDialog() {
       this.$refs.AdmiPersonaDialog.openDialogCliente();
@@ -337,16 +387,16 @@ export default {
     pad(num) {
       return num < 10 ? '0' + num : num;
     },
-    async fetchPedido(pedido_id){
+    async fetchPedido(pedido_id) {
       try {
-        if(pedido_id){
-          const responsePedido = await infoPedidoService.getById(this.$api,pedido_id);
-          if(responsePedido){
-            this.activeIndex=0;
+        if (pedido_id) {
+          const responsePedido = await infoPedidoService.getById(this.$api, pedido_id);
+          if (responsePedido) {
+            this.activeIndex = 0;
             const params = {
-              pedido_id:pedido_id
+              pedido_id: pedido_id
             };
-            const responsePedidoDet = await infoPedidosDetService.getByFilter(this.$api,params);
+            const responsePedidoDet = await infoPedidosDetService.getByFilter(this.$api, params);
             for (const element of responsePedidoDet) {
               if (element.plato_id) {
                 const respPlato = await infoPlatoService.getById(this.$api, element.plato_id);
@@ -370,7 +420,7 @@ export default {
           }
         }
 
-      }catch (e) {
+      } catch (e) {
         console.error(e.message);
         const data = e.response?.data;
         this.$swal.fire({
@@ -380,54 +430,54 @@ export default {
         });
       }
     },
-    async buscaClientes(numeroIdentificacion){
-     try {
-       this.clienteData={cliente:{},persona:{}};
-      if(numeroIdentificacion){
-        const params = {
-          numero_identificacion: numeroIdentificacion,
-          estado: 'Activo'
-        };
-        const responseCliente = await infoClienteService.getByFilter(this.$api,params);
-        if(responseCliente.success===false){
-          throw new Error('No se encontró un registro con N. Id:'+numeroIdentificacion);
-        }else{
-          const responseAdmiPersona = await admiPersonaService.getById(this.$api,responseCliente[0].persona_id);
-          if(responseAdmiPersona){
-            this.clienteData.numero_identificacion=responseAdmiPersona.numero_identificacion;
-            this.clienteData={
-              persona:responseAdmiPersona,
-              cliente:responseCliente[0]
+    async buscaClientes(numeroIdentificacion) {
+      try {
+        this.clienteData = {cliente: {}, persona: {}};
+        if (numeroIdentificacion) {
+          const params = {
+            numero_identificacion: numeroIdentificacion,
+            estado: 'Activo'
+          };
+          const responseCliente = await infoClienteService.getByFilter(this.$api, params);
+          if (responseCliente.success === false) {
+            throw new Error('No se encontró un registro con N. Id:' + numeroIdentificacion);
+          } else {
+            const responseAdmiPersona = await admiPersonaService.getById(this.$api, responseCliente[0].persona_id);
+            if (responseAdmiPersona) {
+              this.clienteData.numero_identificacion = responseAdmiPersona.numero_identificacion;
+              this.clienteData = {
+                persona: responseAdmiPersona,
+                cliente: responseCliente[0]
+              }
             }
           }
+        } else {
+          throw new Error('Debe ingresar un numero de identificacion.')
         }
-      }else{
-        throw new Error('Debe ingresar un numero de identificacion.')
+      } catch (e) {
+        console.error(e.message);
+        const data = e.response?.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data ? (data.data ? data.data : e.message) : e.message}`,
+        });
       }
-     }catch (e) {
-       console.error(e.message);
-       const data = e.response?.data;
-       this.$swal.fire({
-         icon: "error",
-         title: "Upss.. 😢",
-         text: `Algo salió mal: ${data ? (data.data ? data.data : e.message) : e.message}`,
-       });
-     }
     },
-    async anularFactura(item){
+    async anularFactura(item) {
       try {
-        item.estado="Anulado";
-        const response = await infoFacturaService.update(this.$api,item.id_pedido,item);
+        item.estado = "Anulado";
+        const response = await infoFacturaService.update(this.$api, item.id_pedido, item);
         if (response.success === true) {
           this.$swal.fire({
-            icon:"success",
-            title:"Actualizado",
-            text:"Registro actualizado exitosamente!",
-            timer:2000
+            icon: "success",
+            title: "Actualizado",
+            text: "Registro actualizado exitosamente!",
+            timer: 2000
           });
-          this.listarFacturas('Guardada',this.sucursal_id);
+          this.listarFacturas('Guardada', this.sucursal_id);
         }
-      }catch (e) {
+      } catch (e) {
         console.error(e);
         const data = e.response?.data;
         this.$swal.fire({
@@ -440,7 +490,7 @@ export default {
     async listarFacturas(filtro = "", busqueda = {}) {
       try {
         this.limpiar();
-        this.datosPedidos=[];
+        this.datosPedidos = [];
         let params = {
           sucursal_id: this.sucursal_id,
           estado: filtro || 'Guardada'
@@ -452,7 +502,7 @@ export default {
           }
         }
 
-        const response = await infoFacturaService.getByFilter(this.$api,params)
+        const response = await infoFacturaService.getByFilter(this.$api, params)
         if (response) {
           this.datosPedidos = response;
         }
@@ -503,13 +553,33 @@ export default {
     },
     async guardarFactura() {
       try {
+        const now = moment().format("YYYY/MM/DD");
+        const items = [];
+        const formaPago = [{ "tipo": null }];
+        const dataFacturaAzure = {
+          "codigoDoc": "01",
+          "emisor": {
+            "manejo_interno_secuencia": "NO",
+            "secuencial": null,
+            "fecha_emision": now
+          },
+          "comprador": {
+            "tipo_identificacion": null,
+            "identificacion": null,
+            "razon_social": null,
+            "direccion": null,
+            "telefono": null,
+            "celular": null,
+            "correo": null
+          },
+          "items": null,
+          "pagos": null
+        };
+
         let bandera = false;
         let requestFactura = {};
-        if (this.esAdminSistema) {
-          requestFactura.sucursal_id = this.nuevoRegistro.sucursalId.value;
-        } else {
-          requestFactura.sucursal_id = this.sucursal_id;
-        }
+
+        requestFactura.sucursal_id = this.esAdminSistema ? this.nuevoRegistro.sucursalId.value : this.sucursal_id;
         requestFactura.forma_pago_id = this.nuevoRegistro.formaPagoId.value;
         requestFactura.empleado_id = this.$store.state.empleado.empleado_id;
         requestFactura.cliente_id = this.clienteData.cliente.id_cliente;
@@ -521,46 +591,141 @@ export default {
         requestFactura.total_con_impuesto = parseFloat(this.valTotal) + parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
         requestFactura.usuario_creacion = this.$store.state.empleado.usuario;
         requestFactura.usuario_modificacion = this.$store.state.empleado.usuario;
+
+        const responseFormaPago = await admiFormaPagoService.getById(this.$api, requestFactura.forma_pago_id);
+        formaPago[0].tipo = this.getFormaPagoTipo(responseFormaPago?.nombre);
+        dataFacturaAzure.pagos = formaPago;
+
+        const responseCliente = await infoClienteService.getById(this.$api, requestFactura.cliente_id);
+        if (responseCliente) {
+          const responsePersona = await admiPersonaService.getById(this.$api, responseCliente.persona_id);
+          if (responsePersona) {
+            dataFacturaAzure.comprador = this.fillCompradorData(responseCliente, responsePersona);
+          }
+        }
+
         const responseFactura = await infoFacturaService.insert(this.$api, requestFactura);
-        const resFactura = responseFactura.data;
-        if (responseFactura.success === true) {
+        if (responseFactura.success) {
+          const resFactura = responseFactura.data;
+          const empleado_caja = this.$store.state.cajas[0];
+          const responseCaja = await infoCajaService.getById(this.$api, empleado_caja.caja_id);
+          if (responseCaja) {
+            dataFacturaAzure.emisor.secuencial = responseCaja.secuencial;
+          }
+
           for (const element of this.datos) {
-
-            let requestFacturaDet = {};
-
-            const responseImpuesto = await admiImpuestoService.getById(this.$api, element.impuesto_id);
-            const subUni = parseInt(element.cantidad) * parseFloat(element.precio);
-            const imp = (subUni * responseImpuesto.porcentaje) / 100;
-
-            requestFacturaDet.factura_id = resFactura.id_factura;
-            requestFacturaDet.pedido_det_id = element.id_pedido_det;
-            requestFacturaDet.subtotal_impuesto = imp;
-            requestFacturaDet.precio_unitario = parseFloat(element.precio);
-            requestFacturaDet.total_detalle = subUni;
-            requestFacturaDet.cantidad = element.cantidad;
-            requestFacturaDet.estado = 'Guardada';
-            requestFacturaDet.usuario_creacion = this.$store.state.empleado.usuario;
-            requestFacturaDet.usuario_modificacion = this.$store.state.empleado.usuario;
-
-            const responsePedidoDet = await infoFacturaDetService.insert(this.$api, requestFacturaDet);
-            if (responsePedidoDet.success === true) {
+            const itemsAzure = await this.fillItemsAzure(element, resFactura.id_factura);
+            if (itemsAzure) {
               bandera = true;
+              items.push(itemsAzure);
             }
           }
+
+          dataFacturaAzure.items = items;
           if (bandera) {
-            this.$swal.fire({
-              icon: "success",
-              title: "Bien.. ✅",
-              text: `Guardado!`,
-              timer: 2000
-            });
-            this.limpiar();
-            this.listarFacturas('Guardada',this.sucursal_id)
+            const responseAzur = await infoFacturaService.emitirFactura(this.$api, dataFacturaAzure);
+            if (responseAzur.creado) {
+              this.showSuccessAlert();
+              await this.verificaComprobante(responseAzur.claveacceso);
+              this.limpiar();
+              await this.listarFacturas('Guardada', this.sucursal_id);
+            }
           }
         }
       } catch (error) {
         console.error(error);
       }
+    },
+    getFormaPagoTipo(nombre) {
+      const tipos = {
+        'EFECTIVO': '01',
+        'TC': '19',
+        'TD': '16',
+        'CHEQUE': '21',
+        'TRANSACCION': '18'
+      };
+      return tipos[nombre] || '01';
+    },
+    fillCompradorData(cliente, persona) {
+      return {
+        tipo_identificacion: cliente.tipoIdentificacionComprador,
+        identificacion: persona.numero_identificacion,
+        razon_social: cliente.razon_social_comprador,
+        direccion: persona.direccion,
+        telefono: persona.celular,
+        correo: persona.email
+      };
+    },
+    async fillItemsAzure(element, facturaId) {
+      const requestFacturaDet = {
+        factura_id: facturaId,
+        pedido_det_id: element.id_pedido_det,
+        subtotal_impuesto: 0,
+        precio_unitario: parseFloat(element.precio),
+        total_detalle: parseInt(element.cantidad) * parseFloat(element.precio),
+        cantidad: element.cantidad,
+        estado: 'Guardada',
+        usuario_creacion: this.$store.state.empleado.usuario,
+        usuario_modificacion: this.$store.state.empleado.usuario
+      };
+
+      const responseImpuesto = await admiImpuestoService.getById(this.$api, element.impuesto_id);
+      requestFacturaDet.subtotal_impuesto = (requestFacturaDet.total_detalle * responseImpuesto.porcentaje) / 100;
+
+      const itemsAzure = {
+        "codigo_principal": null,
+        "codigo_auxiliar": null,
+        "descripcion": null,
+        "tipoproducto": 1,
+        "tipo_iva": null,
+        "precio_unitario": null,
+        "cantidad": null,
+        "descuento": 0,
+        "tipo_ice": 0,
+        "valor_ice": 0,
+        "tarifa_ice": 0
+      };
+
+      const pedidoDetResponse = await infoPedidosDetService.getById(this.$api, element.id_pedido_det);
+      if (pedidoDetResponse) {
+        itemsAzure.cantidad = element.cantidad;
+        if (pedidoDetResponse.plato_id != null) {
+          const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
+          const impResponse = await admiImpuestoService.getById(this.$api, responsePlato.impuesto_id);
+          itemsAzure.codigo_principal = pedidoDetResponse.plato_id;
+          itemsAzure.descripcion = responsePlato.nombre;
+          itemsAzure.precio_unitario = responsePlato.precio;
+          itemsAzure.tipo_iva = this.getTipoIva(impResponse.porcentaje);
+        }
+        if (pedidoDetResponse.producto_id != null) {
+          const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
+          const impResponse = await admiImpuestoService.getById(this.$api, responseProducto.impuesto_id);
+          itemsAzure.codigo_principal = pedidoDetResponse.producto_id;
+          itemsAzure.descripcion = responseProducto.nombre;
+          itemsAzure.precio_unitario = responseProducto.precio;
+          itemsAzure.tipo_iva = this.getTipoIva(impResponse.porcentaje);
+        }
+      }
+
+      const responsePedidoDet = await infoFacturaDetService.insert(this.$api, requestFacturaDet);
+      if (responsePedidoDet.success) {
+        return itemsAzure;
+      }
+      return null;
+    },
+    getTipoIva(porcentaje) {
+      if (porcentaje === 0) return 0;
+      if (porcentaje === 15) return 4;
+      if (porcentaje === 12) return 2;
+      return null;
+    },
+    showSuccessAlert() {
+      this.$swal.fire({
+        icon: "success",
+        title: "Bien.. ✅",
+        text: `Guardado!`,
+        timer: 1000
+      });
     },
     async searchFormaPago(event) {
       try {
@@ -646,8 +811,8 @@ export default {
     },
     async searchEstadosFacturas(event) {
       try {
-        const params = { descripcion: "estados_facturas", estado: "Activo" };
-        const data = await admiParametrosService.getbyfilterCab(this.$api,params)
+        const params = {descripcion: "estados_facturas", estado: "Activo"};
+        const data = await admiParametrosService.getbyfilterCab(this.$api, params)
         this.estados_facturas = data.filter(param =>
             param.valor.toLowerCase().includes(event.query.toLowerCase()) ||
             param.clave.toLowerCase().includes(event.query.toLowerCase())
@@ -664,8 +829,8 @@ export default {
     },
     async getEstadosFacturas() {
       try {
-        const params = { descripcion: "estados_facturas", estado: "Activo" };
-        const respuesta = await admiParametrosService.getbyfilterCab(this.$api,params)
+        const params = {descripcion: "estados_facturas", estado: "Activo"};
+        const respuesta = await admiParametrosService.getbyfilterCab(this.$api, params)
         if (respuesta.success === true) {
           this.estados_facturasd = respuesta.data;
         }
@@ -690,7 +855,7 @@ export default {
       if (isNaN(numberValue)) {
         throw new TypeError('Value must be a number or a string representing a number');
       }
-      return numberValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+      return numberValue.toLocaleString('en-US', {style: 'currency', currency: 'USD'});
     },
     limpiar() {
       this.datos = [];
@@ -703,6 +868,102 @@ export default {
     limpiarTabs() {
       this.limpiar()
     },
+    async verificaComprobante(item) {
+      try {
+        const respuesta = await infoFacturaService.consultarFactura(this.$api, item);
+        if (respuesta.estado_texto === "Autorizado") {
+          window.open(respuesta.enlace_pdf, '_blank');
+        } else {
+          throw respuesta;
+        }
+      } catch (e) {
+        console.error(e);
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+        });
+      }
+    },
+    async descargarPdfFactura(item) {
+      try {
+        const params = {
+          claveacceso: item.clave_acceso
+        };
+        await this.verificaComprobante(params);
+      } catch (e) {
+        console.error(e);
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+        });
+      }
+    },
+    async descargarComprobantePdf(item) {
+      try {
+        const detalle = [];
+        const data = {
+              "clienteDireccion": null,
+              "clienteNombre": null,
+              "detalles": null,
+              "clienteTelefono": null,
+              "mensaje": "Gracias por su compra",
+              "claveAcceso": null,
+              "numComprobante": null,
+              "total": 0,
+              "desc": 0,
+              "imp": 0,
+              "subTotal": 0
+            }
+        ;
+        const facturaRes = await infoFacturaService.getById(this.$api, item.id_factura);
+        if (facturaRes) {
+          const facturaDetArr = await infoFacturaDetService.getByFilter(this.$api, item.id_factura);
+          if (facturaDetArr.length > 0) {
+            for (let element of facturaDetArr) {
+              const items = {
+                producto: null,
+                cantidad: null,
+                precio_unitario: null
+              };
+              const pedidoDetResponse = await infoPedidosDetService.getById(this.$api, element.pedido_det_id);
+              if (pedidoDetResponse) {
+                if (pedidoDetResponse.plato_id != null) {
+                  const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
+                  items.producto = responsePlato.nombre;
+                  items.cantidad = element.cantidad;
+                  items.precio_unitario = element.precio_unitario;
+                }
+                if (pedidoDetResponse.producto_id != null) {
+                  const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
+                  items.producto = responseProducto.nombre;
+                  items.cantidad = element.cantidad;
+                  items.precio_unitario = element.precio_unitario;
+                }
+                detalle.push(items);
+              }
+              data.detalles = detalle;
+            }
+          } else {
+            throw "No hay detalles para la factura:" + facturaRes.id_factura;
+          }
+        }
+        const response = await generaPdfService.generatePdf(this.$api, 'pdf-ticket-factura', data)
+        if (response) {
+          window.open(response, '_blank');
+        }
+      } catch (e) {
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+        });
+      }
+    }
   },
 }
 </script>

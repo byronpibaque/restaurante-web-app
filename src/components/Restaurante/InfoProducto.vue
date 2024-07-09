@@ -49,8 +49,8 @@
       </div>
       <div class="dialog-content">
         <span class="text-subtitle">Existencias:</span>
-        <InputNumber :disabled="view" v-model="nuevoRegistro.existencias" showButtons buttonLayout="vertical"
-          style="width: 3rem" :min="0" :max="999">
+        <InputNumber :disabled="true" v-model="nuevoRegistro.existencias" showButtons buttonLayout="vertical"
+          style="width: 3rem" :min="0" :max="0">
           <template #incrementbuttonicon>
             <span class="pi pi-plus" />
           </template>

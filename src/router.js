@@ -24,6 +24,10 @@ import InfoProducto from './components/Restaurante/InfoProducto.vue';
 import InfoCliente from './components/Financiero/InfoCliente.vue';
 import InfoPedido from './components/Financiero/Pedidos/InfoPedido.vue';
 import InfoFacturas from "@/components/Financiero/Facturas/InfoFacturas.vue";
+import InfoCompras from "@/components/Financiero/Ingresos/InfoCompras.vue";
+import AdmiProveedor from "@/components/Administracion/AdmiProveedor.vue";
+import InfoMovimientos from "@/components/Financiero/Movimientos/InfoMovimientos.vue";
+import InfoArqueos from "@/components/Financiero/Arqueos/InfoArqueos.vue";
 
 const routes = [
     { path: '/', component: Home },
@@ -34,6 +38,7 @@ const routes = [
     { path: '/admi-roles', component: AdmiRoles, meta: { roles: ['ADMINISTRADOR-SISTEMA']} },
     { path: '/admi-personas', component: AdmiPersona, meta: { roles: ['ADMINISTRADOR-SISTEMA']} },
     { path: '/admi-propietarios', component: AdmiPropietario, meta: { roles: ['ADMINISTRADOR-SISTEMA']} },
+    { path: '/admi-proveedor', component: AdmiProveedor, meta: { roles: ['ADMINISTRADOR-SISTEMA','CAJERO']} },
     { path: '/admi-usuarios', component: AdmiEmpleado, meta: { roles: ['ADMINISTRADOR-SISTEMA']} },
     { path: '/admi-restaurantes', component: AdmiRestaurante, meta: { roles: ['ADMINISTRADOR-SISTEMA']} },
     { path: '/admi-sucursales', component: AdmiSucursal, meta: { roles: ['ADMINISTRADOR-SISTEMA']} },
@@ -52,6 +57,12 @@ const routes = [
         props: route => ({ params: JSON.parse(route.query.params || '{}') }),
         meta: { roles: ['ADMINISTRADOR-SISTEMA','ADMINISTRADOR-RESTAURANTE','MESERO','CAJERO']}},
     {
+        path: '/info-ingresos',
+        name: 'info-ingresos',
+        component: InfoCompras,
+        props: route => ({ params: JSON.parse(route.query.params || '{}') }),
+        meta: { roles: ['ADMINISTRADOR-SISTEMA','ADMINISTRADOR-RESTAURANTE','MESERO','CAJERO']}},
+    {
         path: '/info-facturas/:pedido_id',
         name: 'info-facturas',
         component: InfoFacturas,
@@ -64,6 +75,8 @@ const routes = [
         component: InfoFacturas,
         meta: { roles: ['ADMINISTRADOR-SISTEMA','ADMINISTRADOR-RESTAURANTE','CAJERO']}
     },
+    { path: '/info-movimientos', component: InfoMovimientos, meta: { roles: ['ADMINISTRADOR-SISTEMA','ADMINISTRADOR-RESTAURANTE','CAJERO']}},
+    { path: '/info-arqueos', component: InfoArqueos, meta: { roles: ['ADMINISTRADOR-SISTEMA','ADMINISTRADOR-RESTAURANTE','CAJERO']}},
     { path: '/login', component: Login},
     { path: '/forgotyourpassword', name: 'forgotpassword', component: ForgotPassword },
     { path: '/access-denied', component: AccessDenied},

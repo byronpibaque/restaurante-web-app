@@ -36,8 +36,16 @@
 
           <InputText :disabled="view" id="razon_social_comprador" v-model="registro.razon_social_comprador" placeholder="Razon social"
             class="input-spacing" />
-
         </div>
+
+        <div v-if="proveedor">
+          <span class="text-subtitle">Información de proveedores</span>
+          <Divider />
+
+          <InputText :disabled="view" id="razon_social_comprador" v-model="registro.razon_social_proveedor" placeholder="Razon social"
+                     class="input-spacing" />
+        </div>
+
 
         <div v-if="empleado">
           <span class="text-subtitle">Información de empleado</span>
@@ -123,6 +131,7 @@ export default {
   data() {
     return {
       endpointPropietario: "/infoPropietario",
+      endpointProveedor: "/infoProveedor",
       endpointCliente: "/infoCliente",
       endpointEmpleado: "/infoEmpleado",
       endpointAccesoEmpleado: "/infoAccesoEmpleado",
@@ -131,6 +140,7 @@ export default {
       view: false,
       update: false,
       propietario: false,
+      proveedor: false,
       empleado: false,
       cliente: false,
       itemsDet: [],
@@ -246,6 +256,21 @@ export default {
               bandera = true;
             }
           }
+          if (this.proveedor) {
+            if(this.registro.tipo_documento==='CI'){
+              this.registro.tipoIdentificacionProveedor='05';
+            }else if(this.registro.tipo_documento==='RUC'){
+              this.registro.tipoIdentificacionProveedor='04';
+            }else if(this.registro.tipo_documento==='PASS'){
+              this.registro.tipoIdentificacionProveedor='06';
+            }
+            this.registro.persona_id = resCab.data.id_persona;
+            const resProveedor = await this.$api.post(`${this.endpointProveedor}/`, this.registro);
+            const responsP = resProveedor.data;
+            if (responsP.success === true) {
+              bandera = true;
+            }
+          }
           if(this.cliente){
             if(this.registro.tipo_documento==='CI'){
                 this.registro.tipoIdentificacionComprador='05';
@@ -341,6 +366,20 @@ export default {
               bandera = true;
             }
           }
+          if (this.proveedor) {
+            if(this.registro.tipo_documento==='CI'){
+              this.registro.tipoIdentificacionProveedor='05';
+            }else if(this.registro.tipo_documento==='RUC'){
+              this.registro.tipoIdentificacionProveedor='04';
+            }else if(this.registro.tipo_documento==='PASS'){
+              this.registro.tipoIdentificacionProveedor='06';
+            }
+            const resProveedor = await this.$api.put(`${this.endpointProveedor}/${this.registro.id_proveedor}`, this.registro);
+            const responsP = resProveedor.data;
+            if (responsP.success === true) {
+              bandera = true;
+            }
+          }
           if (this.cliente) {
 
             if(this.registro.tipo_documento==='CI'){
@@ -424,6 +463,20 @@ export default {
       this.update = true;
       this.propietario = true;
     },
+    openDialogProveedor() {
+      this.dialogVisible = true;
+      this.proveedor = true;
+    },
+    openDialogViewProveedor() {
+      this.dialogVisible = true;
+      this.view = true;
+      this.proveedor = true;
+    },
+    openDialogUpdateProveedor() {
+      this.dialogVisible = true;
+      this.update = true;
+      this.proveedor = true;
+    },
     openDialogEmpleado() {
       this.dialogVisible = true;
       this.empleado = true;
@@ -476,6 +529,12 @@ export default {
         this.registro.id_propietario = "";
         this.registro.razon_social = "";
         this.propietario = false;
+      }
+      if (this.proveedor) {
+        this.registro.id_proveedor = "";
+        this.registro.razon_social = "";
+        this.registro.tipoIdentificacionProveedor = "";
+        this.proveedor = false;
       }
       if (this.empleado) {
         this.registro.id_empleado = "";
