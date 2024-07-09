@@ -22,6 +22,8 @@ export default defineConfig({
     include: ['vue', '@vueuse/core', 'vue3-toastify'] // Include vue3-toastify if it's a dependency
   },
   build: {
+    outDir: 'dist', // Directorio de salida para la construcción de producción
+    emptyOutDir: true, // Limpiar directorio de salida antes de construir
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./src/main.js', import.meta.url)) // Specify the entry point
