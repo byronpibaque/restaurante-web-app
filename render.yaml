@@ -1,6 +1,11 @@
 services:
-  - name: restaurante-web-app
-    env:
-      NODE_ENV: production
+  - type: web
+    name: your-app-name
+    env: static
+    staticPublishPath: dist
     buildCommand: npm run build
     startCommand: npm run start
+    routes:
+      - type: rewrite
+        source: /.*
+        destination: /index.html
