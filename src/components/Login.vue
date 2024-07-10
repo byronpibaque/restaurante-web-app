@@ -46,6 +46,7 @@ export default {
           };
           this.$store.dispatch('saveToken', payload);
           this.$router.push('/');
+          window.location.reload();
         }
       }catch(e) {
         const data = e.response;
