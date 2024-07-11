@@ -1,6 +1,7 @@
 // api.js
 import axios from 'axios';
-const url = 'https://restapp-9ke7.onrender.com/';
+//const url = 'https://restapp-9ke7.onrender.com/';
+const url = 'http://localhost:10000/';
 const api = axios.create({
   baseURL: url,
 });

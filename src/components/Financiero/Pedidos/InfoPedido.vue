@@ -47,6 +47,7 @@
         </div>
         <br>
         <Dialog :header="'Items'" v-model:visible="mostrarDialogo" style="width: 90%;"
+                @hide="nuevoRegistro.busqueda='',nuevoRegistro.filtraBusqueda=''"
                 class="responsive-dialog1">
           <div class="card">
             <InputText :disabled="view" id="Buscar" v-model="nuevoRegistro.filtraBusqueda"
@@ -60,8 +61,15 @@
                     <div class="flex flex-column sm:flex-row sm:align-items-center p-4 gap-3"
                          :class="{ 'border-top-1 surface-border': index !== 0 }">
                       <div class="md:w-10rem relative">
-                        <img class="block xl:block mx-auto border-round w-full"
-                             :src="`https://primefaces.org/cdn/primevue/images/product/${item.nombre}.jpg`"
+                        <img v-if="item.categoria==='BEBIDAS'" class="block xl:block mx-auto border-round w-full"
+                             :src="`src/assets/soda.png`"
+                             :alt="item.nombre"/>
+                        <img v-else-if="['PLATO PRINCIPAL', 'POSTRES', 'DESAYUNOS', 'SALIDAS', 'ENTRADAS'].includes(item.categoria)"
+                             class="block xl:block mx-auto border-round w-full"
+                             :src="`src/assets/dish.png`"
+                             :alt="item.nombre"/>
+                        <img v-else class="block xl:block mx-auto border-round w-full"
+                             :src="`src/assets/list.png`"
                              :alt="item.nombre"/>
                       </div>
                       <div
@@ -209,17 +217,17 @@
       <div class="grid">
         <div class="col-1">
           <Button v-if="!view && !update" label="" icon="pi pi-check" class="p-button-success"
-                  v-tooltip="'Guardar Pedido.'"
+                  v-tooltip="'Guardar Pedido'"
                   @click="guardarPedido"></Button>
         </div>
         <div class="col-1">
-          <Button v-if="!view && !update" label="" icon="pi pi-send" class="p-button-info"
-                  v-tooltip="'Guardar y enviar a facturar.'"
+          <Button v-if="!view && !update && esFacturador" label="" icon="pi pi-send" class="p-button-info"
+                  v-tooltip="'Guardar y enviar a facturar'"
                   @click="guardaryfacturarPedido"></Button>
         </div>
         <div class="col-1">
           <Button v-if="update" label="" icon="pi pi-pencil" class="p-button-warning"
-                  v-tooltip="'Editar Pedido.'"
+                  v-tooltip="'Editar Pedido'"
                   @click="actualizarPedido"></Button>
         </div>
       </div>
@@ -337,6 +345,7 @@ import Calendar from 'primevue/calendar';
 import moment from "moment";
 import Checkbox from "primevue/checkbox";
 import infoMesaService from "@/components/services/infoMesaService.js";
+import generaPdfService from "@/components/services/generatePdfService.js";
 
 
 export default {
@@ -427,6 +436,14 @@ export default {
     rolesAdmin() {
       return ['ADMINISTRADOR-SISTEMA', 'ADMINISTRADOR-RESTAURANTE'];
     },
+    rolesPermitidosFacturar(){
+      return ['CAJERO']
+    },
+    esFacturador(){
+      const rolesSesion = this.getDataUserSesion();
+      const esFacturador = rolesSesion.some(element => this.rolesPermitidosFacturar.includes(element.rol));
+      return esFacturador;
+    },
     esAdminSistema() {
       const rolesSesion = this.getDataUserSesion();
       const esAdmin = rolesSesion.some(element => this.rolesAdmin.includes(element.rol));
@@ -437,97 +454,146 @@ export default {
   },
   methods: {
     async descargarComprobantePdfDelivery(item){
-      const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api,{pedido_id:item.id_pedido});
-      const infoCliente = item.observacion.split('|')
-      const data = {
-        "clienteDireccion": null,
-        "clienteNombre": null,
-        "clienteTelefono": null,
-        "detalles": null
-      };
-      const detalle = [];
-
-      data.clienteNombre = infoCliente[0] || 'No definido';
-      data.clienteDireccion = infoCliente[1] || 'No definido';
-      data.clienteTelefono = infoCliente[2] || 'No definido';
-      for (const pedidoDetResponse of responsePedidoDet) {
-        const items = {
-          producto: null,
-          cantidad: null
+      try {
+        const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api,{pedido_id:item.id_pedido});
+        const infoCliente = item.observacion.split('|')
+        const data = {
+          "clienteDireccion": null,
+          "clienteNombre": null,
+          "clienteTelefono": null,
+          "detalles": null
         };
-        if (pedidoDetResponse) {
-          if (pedidoDetResponse.plato_id != null) {
-            const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
-            items.producto = responsePlato.nombre;
-            items.cantidad = element.cantidad;
+        const detalle = [];
+
+        data.clienteNombre = infoCliente[0] || 'No definido';
+        data.clienteDireccion = infoCliente[1] || 'No definido';
+        data.clienteTelefono = infoCliente[2] || 'No definido';
+        for (const pedidoDetResponse of responsePedidoDet) {
+          const items = {
+            producto: null,
+            cantidad: null
+          };
+          if (pedidoDetResponse) {
+            if (pedidoDetResponse.plato_id != null) {
+              const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
+              items.producto = responsePlato.nombre;
+              items.cantidad = pedidoDetResponse.cantidad;
+            }
+            if (pedidoDetResponse.producto_id != null) {
+              const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
+              items.producto = responseProducto.nombre;
+              items.cantidad = pedidoDetResponse.cantidad;
+            }
+            detalle.push(items);
           }
-          if (pedidoDetResponse.producto_id != null) {
-            const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
-            items.producto = responseProducto.nombre;
-            items.cantidad = element.cantidad;
-          }
-          detalle.push(items);
+          data.detalles = detalle;
         }
-        data.detalles = detalle;
+        const response = await generaPdfService.generatePdf(this.$api, 'pdf-ticket-pedido', data)
+        if (response) {
+          window.open(response, '_blank');
+        }
+      }
+      catch (e) {
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+        });
       }
     },
     async descargarComprobantePdf(item){
-      const responseMesa = await infoMesaService.getById(this.$api,item.mesa_id);
-      const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api,{pedido_id:item.id_pedido});
-      const detalle = [];
-      const data = {
-        "mesa": null,
-        "detalles": null
-      };
-      if (responseMesa) {
-        data.mesa=responseMesa.numero_mesa;
-      }
-      for (const pedidoDetResponse of responsePedidoDet) {
-        const items = {
-          producto: null,
-          cantidad: null
+      try{
+        const responseMesa = await infoMesaService.getById(this.$api,item.mesa_id);
+        const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api,{pedido_id:item.id_pedido});
+        const detalle = [];
+        const data = {
+          "mesa": null,
+          "detalles": null
         };
-        if (pedidoDetResponse) {
-          if (pedidoDetResponse.plato_id != null) {
-            const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
-            items.producto = responsePlato.nombre;
-            items.cantidad = element.cantidad;
-          }
-          if (pedidoDetResponse.producto_id != null) {
-            const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
-            items.producto = responseProducto.nombre;
-            items.cantidad = element.cantidad;
-          }
-          detalle.push(items);
+        if (responseMesa) {
+          data.mesa=responseMesa.numero_mesa;
         }
-        data.detalles = detalle;
+        for (const pedidoDetResponse of responsePedidoDet) {
+          const items = {
+            producto: null,
+            cantidad: null
+          };
+          if (pedidoDetResponse) {
+            if (pedidoDetResponse.plato_id != null) {
+              const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
+              items.producto = responsePlato.nombre;
+              items.cantidad = pedidoDetResponse.cantidad;
+            }
+            if (pedidoDetResponse.producto_id != null) {
+              const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
+              items.producto = responseProducto.nombre;
+              items.cantidad = pedidoDetResponse.cantidad;
+            }
+            detalle.push(items);
+          }
+          data.detalles = detalle;
+        }
+        const response = await generaPdfService.generatePdf(this.$api, 'pdf-ticket-pedido-mesa', data)
+        if (response) {
+          window.open(response, '_blank');
+        }
+      }
+      catch(e){
+        console.error(e)
+        const data = e.response.data;
+        this.$swal.fire({
+          icon: "error",
+          title: "Upss.. 😢",
+          text: `Algo salió mal: ${data.data}`,
+        });
       }
 
     },
     convertToUppercase(event) {
       this.nuevoRegistro.busqueda = event.target.value.toUpperCase();
     },
+    async obtenerRoles() {
+      const roles = this.$store.state.roles;
+      const listaRoles = [];
+      roles.forEach((rol) => {
+        listaRoles.push(rol.rol);
+      });
+      return listaRoles;
+    },
     async comprobarEstadoCaja(){
-      const empleado_caja = this.$store.state.cajas[0];
-      if(empleado_caja){
-        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-        if(response.estado==='Activo'){
-          this.estadoCaja=true;
-        }else if(response.estado==='Finalizado'){
-          this.estadoCaja=false;
-          this.$swal.fire({
-            icon: "warning",
-            title: "Ups 😢",
-            text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
-          });
-        }
-      }else{
-        this.estadoCaja=false;
-        this.$swal.fire({
-          icon: "warning",
-          title: "Ups 😢",
-          text: `No se ha encontrado un arqueo para caja hoy!`,
+      try {
+        const empleado_caja = this.$store.state.cajas[0];
+        const roles = await this.obtenerRoles();
+        const rolesEsAdminOCaja = roles.map((rol) => {
+          return rol === "ADMINISTRADOR-SISTEMA" || rol === "ADMINISTRADOR-RESTAURANTE"|| rol === "CAJERO";
         });
+        if(empleado_caja && rolesEsAdminOCaja ){
+          const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
+          if(response.estado){
+            if(response.estado==='Activo'){
+              this.estadoCaja=true;
+            }else if(response.estado==='Finalizado'){
+              this.estadoCaja=false;
+              this.$swal.fire({
+                icon: "warning",
+                title: "Ups 😢",
+                text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
+              });
+            }
+          }else{
+            this.$swal.fire({
+              icon: "error",
+              title: "Ups1 😢",
+              text: `${response.data}`,
+            });
+          }
+        }else{
+          this.estadoCaja=true;
+        }
+      }
+      catch (e){
+        console.error(e);
       }
     },
     async cargaDataParaPedido(params) {
@@ -750,6 +816,13 @@ export default {
     async editarPedido(item) {
       try {
         this.nuevoRegistro = item;
+        if(item.mesa_id === null){
+          this.esDelivery = true;
+          const infoCliente = item.observacion.split('|')
+          this.nombre_cliente = infoCliente[0] || 'No definido';
+          this.direccion_cliente = infoCliente[1] || 'No definido';
+          this.telefono_cliente = infoCliente[2] || 'No definido';
+        }
         const params = {
           pedido_id: item.id_pedido,
           estado: 'Pendiente'
@@ -1326,6 +1399,10 @@ export default {
       this.valTotal = 0.0;
       this.nuevoRegistro = {};
       this.activeIndex = 1;
+      this.telefono_cliente="";
+      this.nombre_cliente = "";
+      this.direccion_cliente = "";
+      this.update="";
     },
     limpiarTabs() {
       this.limpiar()

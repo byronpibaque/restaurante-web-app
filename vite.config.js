@@ -10,11 +10,11 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist', // Directorio de salida
+    outDir: 'dist',
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
         manualChunks: {
-          // Divide los paquetes grandes en chunks más pequeños
           vue: ['vue']
         }
       }
@@ -22,7 +22,7 @@ export default defineConfig({
   },
   publicDir: 'public',
   server: {
-    port: 3000, // Puerto de desarrollo
-    open: true  // Abrir el navegador automáticamente
+    port: 3000,
+    open: true
   }
 });

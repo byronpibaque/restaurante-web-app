@@ -427,7 +427,7 @@ export default {
     let cajaSistema = ref({});
     listenEvent('mensaje',(data)=>{
       console.log(data)
-      toast(data,{
+      toast(data.message,{
         autoClose: 2000,
       });
     });

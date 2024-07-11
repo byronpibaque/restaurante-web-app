@@ -34,26 +34,51 @@ export default {
 
   },
   methods: {
+    async obtenerRoles() {
+      const roles = this.$store.state.roles;
+      const listaRoles = [];
+      roles.forEach((rol) => {
+        listaRoles.push(rol.rol);
+      });
+      return listaRoles;
+    },
     async comprobarEstadoCaja(){
-      const empleado_caja = this.$store.state.cajas[0];
-      if(empleado_caja){
-        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-        if(response.estado==='Activo'){
+      try {
+        const empleado_caja = this.$store.state.cajas[0];
+        const roles = await this.obtenerRoles();
+        const rolesEsAdminOCaja = roles.map((rol) => {
+          return rol === "ADMINISTRADOR-SISTEMA" || rol === "ADMINISTRADOR-RESTAURANTE"|| rol === "CAJERO";
+        });
+        if(empleado_caja && rolesEsAdminOCaja ){
+          const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
+          if(response){
+            if(response.estado==='Activo'){
+              this.estadoCaja=true;
+            }else if(response.estado==='Finalizado'){
+              this.estadoCaja=false;
+              this.$swal.fire({
+                icon: "warning",
+                title: "Ups 😢",
+                text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
+              });
+            }
+          }else{
+            this.$swal.fire({
+              icon: "error",
+              title: "Ups 😢",
+              text: `${response.data}`,
+            });
+          }
+        }else{
           this.estadoCaja=true;
-        }else if(response.estado==='Finalizado'){
-          this.estadoCaja=false;
-          this.$swal.fire({
-            icon: "warning",
-            title: "Ups 😢",
-            text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
-          });
         }
-      }else{
-        this.estadoCaja=false;
+      }
+      catch (e){
+        console.error(e);
         this.$swal.fire({
-          icon: "warning",
+          icon: "error",
           title: "Ups 😢",
-          text: `No se ha encontrado un arqueo para caja hoy!`,
+          text: `${e.data}`,
         });
       }
     },

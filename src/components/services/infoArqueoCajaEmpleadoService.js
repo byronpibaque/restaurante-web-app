@@ -20,7 +20,7 @@ const infoArqueoCajaEmpleado = {
             }
         } catch (e) {
             const err = e.response;
-            return err.data;
+            throw err.data;
         }
     },
     getByFilter: async (api,params) => {
