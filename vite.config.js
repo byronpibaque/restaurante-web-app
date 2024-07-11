@@ -20,6 +20,7 @@ export default defineConfig({
       }
     }
   },
+  publicDir: 'public',
   server: {
     port: 3000, // Puerto de desarrollo
     open: true  // Abrir el navegador automáticamente
