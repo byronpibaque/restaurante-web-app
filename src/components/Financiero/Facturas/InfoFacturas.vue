@@ -921,7 +921,7 @@ export default {
         ;
         const facturaRes = await infoFacturaService.getById(this.$api, item.id_factura);
         if (facturaRes) {
-          const facturaDetArr = await infoFacturaDetService.getByFilter(this.$api, item.id_factura);
+          const facturaDetArr = await infoFacturaDetService.getByFilter(this.$api, {factura_id:item.id_factura});
           if (facturaDetArr.length > 0) {
             for (let element of facturaDetArr) {
               const items = {

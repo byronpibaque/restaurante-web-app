@@ -40,6 +40,11 @@
             <i class="fas fa-bicycle" style="font-size: 1.5rem"></i> Es delivery?
           </label>
         </div>
+        <div class="col-9">
+          <InputText v-if="esDelivery" class="input-spacing" v-model="nombre_cliente" placeholder="Nombre cliente:"/>
+          <InputText v-if="esDelivery" class="input-spacing" v-model="direccion_cliente" placeholder="Dirección cliente:"/>
+          <InputText v-if="esDelivery" class="input-spacing" v-model="telefono_cliente" placeholder="Teléfono cliente:"/>
+        </div>
         <br>
         <Dialog :header="'Items'" v-model:visible="mostrarDialogo" style="width: 90%;"
                 class="responsive-dialog1">
@@ -273,6 +278,12 @@
                         @click="cancelarPedido(slotProps.data)"
                         v-tooltip="'Cancelar Pedido'">
                 </Button>
+                <Button v-if="slotProps.data.mesa_id!==null"
+                        v-tooltip="'Imprimir Recibo'" class="boton-azul" icon="pi pi-receipt"
+                        @click="descargarComprobantePdf(slotProps.data)"></Button>
+                <Button v-else
+                        v-tooltip="'Imprimir Recibo'" class="boton-azul" icon="pi pi-receipt"
+                        @click="descargarComprobantePdfDelivery(slotProps.data)"></Button>
                 <Button v-if="['Anulado'].includes(slotProps.data.estado)" icon="pi pi-history" class="boton-naranja"
                         @click="restaurarPedidoAnulado(slotProps.data)" v-tooltip="'Restaurar pedido'"></Button>
               </div>
@@ -325,6 +336,7 @@ import {api} from "@/api.js";
 import Calendar from 'primevue/calendar';
 import moment from "moment";
 import Checkbox from "primevue/checkbox";
+import infoMesaService from "@/components/services/infoMesaService.js";
 
 
 export default {
@@ -391,6 +403,9 @@ export default {
       estadoCaja:false,
       dates:null,
       esDelivery:false,
+      nombre_cliente:"",
+      direccion_cliente:"",
+      telefono_cliente:"",
     }
   },
   props: {
@@ -421,6 +436,74 @@ export default {
   mounted() {
   },
   methods: {
+    async descargarComprobantePdfDelivery(item){
+      const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api,{pedido_id:item.id_pedido});
+      const infoCliente = item.observacion.split('|')
+      const data = {
+        "clienteDireccion": null,
+        "clienteNombre": null,
+        "clienteTelefono": null,
+        "detalles": null
+      };
+      const detalle = [];
+
+      data.clienteNombre = infoCliente[0] || 'No definido';
+      data.clienteDireccion = infoCliente[1] || 'No definido';
+      data.clienteTelefono = infoCliente[2] || 'No definido';
+      for (const pedidoDetResponse of responsePedidoDet) {
+        const items = {
+          producto: null,
+          cantidad: null
+        };
+        if (pedidoDetResponse) {
+          if (pedidoDetResponse.plato_id != null) {
+            const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
+            items.producto = responsePlato.nombre;
+            items.cantidad = element.cantidad;
+          }
+          if (pedidoDetResponse.producto_id != null) {
+            const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
+            items.producto = responseProducto.nombre;
+            items.cantidad = element.cantidad;
+          }
+          detalle.push(items);
+        }
+        data.detalles = detalle;
+      }
+    },
+    async descargarComprobantePdf(item){
+      const responseMesa = await infoMesaService.getById(this.$api,item.mesa_id);
+      const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api,{pedido_id:item.id_pedido});
+      const detalle = [];
+      const data = {
+        "mesa": null,
+        "detalles": null
+      };
+      if (responseMesa) {
+        data.mesa=responseMesa.numero_mesa;
+      }
+      for (const pedidoDetResponse of responsePedidoDet) {
+        const items = {
+          producto: null,
+          cantidad: null
+        };
+        if (pedidoDetResponse) {
+          if (pedidoDetResponse.plato_id != null) {
+            const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
+            items.producto = responsePlato.nombre;
+            items.cantidad = element.cantidad;
+          }
+          if (pedidoDetResponse.producto_id != null) {
+            const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
+            items.producto = responseProducto.nombre;
+            items.cantidad = element.cantidad;
+          }
+          detalle.push(items);
+        }
+        data.detalles = detalle;
+      }
+
+    },
     convertToUppercase(event) {
       this.nuevoRegistro.busqueda = event.target.value.toUpperCase();
     },
@@ -485,6 +568,7 @@ export default {
         if(!this.esDelivery){
           requestPedido.mesa_id = this.nuevoRegistro.mesaId.value;
         }else{
+          requestPedido.observacion = `${this.nombre_cliente}|${this.direccion_cliente}|${this.telefono_cliente}`;
           requestPedido.mesa_id = null;
         }
         requestPedido.empleado_id = this.$store.state.empleado.empleado_id;
@@ -493,7 +577,6 @@ export default {
         requestPedido.total_impuesto = parseFloat(this.valSubtotal12) + parseFloat(this.valSubtotal15);
         requestPedido.usuario_creacion = this.$store.state.empleado.usuario;
         requestPedido.usuario_modificacion = this.$store.state.empleado.usuario;
-
         const responsePedido = await infoPedidoService.insert(this.$api, requestPedido);
         const resPedido = responsePedido.data;
         if (responsePedido.success === true) {
@@ -811,12 +894,6 @@ export default {
         }
       } catch (e) {
         console.error(e);
-        const data = e.response?.data;
-        this.$swal.fire({
-          icon: "error",
-          title: "Upss.. 😢",
-          text: `Algo salió mal: ${data ? data.data : "Error desconocido"}`,
-        });
       }
     },
     formatFecha(fecha) {
@@ -874,6 +951,7 @@ export default {
         if(!this.esDelivery){
           requestPedido.mesa_id = this.nuevoRegistro.mesaId.value;
         }else{
+          requestPedido.observacion = `${this.nombre_cliente}|${this.direccion_cliente}|${this.telefono_cliente}`;
           requestPedido.mesa_id = null;
         }
         requestPedido.empleado_id = this.$store.state.empleado.empleado_id;

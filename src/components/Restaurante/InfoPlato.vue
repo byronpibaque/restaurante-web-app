@@ -34,11 +34,13 @@
 
       <div class="dialog-content">
         <InputText :disabled="view" id="nombre" v-model="nuevoRegistro.nombre" placeholder="Plato:"
-          class="input-spacing" />
+                   maxlength="25"
+                   class="input-spacing" />
       </div>
       <div class="dialog-content">
         <InputText :disabled="view" id="descripcion" v-model="nuevoRegistro.descripcion" placeholder="Descripcion:"
-          class="input-spacing" />
+                   maxlength="25"
+                   class="input-spacing" />
       </div>
       <div class="dialog-content">
         <InputNumber :disabled="view" v-model="nuevoRegistro.precio" inputId="currency-us" mode="currency"

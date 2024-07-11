@@ -1,10 +1,10 @@
 // api.js
 import axios from 'axios';
-
+const url = 'https://restapp-9ke7.onrender.com/';
 const api = axios.create({
-  baseURL: 'https://restapp-9ke7.onrender.com/',
+  baseURL: url,
 });
 
-const apiSocket =  'https://restapp-9ke7.onrender.com';
+const apiSocket =  url;
 
 export {api,apiSocket};

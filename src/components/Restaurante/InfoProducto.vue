@@ -33,15 +33,19 @@
     <Dialog :header="dialogHeader" v-model:visible="mostrarDialogo" @hide="limpiar" class="responsive-dialog1">
       <div class="dialog-content">
         <InputText :disabled="view" id="codigo_barra" v-model="nuevoRegistro.codigo_barra" placeholder="Codigo de Barras:"
-          class="input-spacing" />
+                   maxlength="5"
+
+                   class="input-spacing" />
       </div>
       <div class="dialog-content">
         <InputText :disabled="view" id="nombre" v-model="nuevoRegistro.nombre" placeholder="Producto:"
-          class="input-spacing" />
+                   maxlength="25"
+                   class="input-spacing" />
       </div>
       <div class="dialog-content">
         <InputText :disabled="view" id="descripcion" v-model="nuevoRegistro.descripcion" placeholder="Descripcion:"
-          class="input-spacing" />
+                   maxlength="25"
+                   class="input-spacing" />
       </div>
       <div class="dialog-content">
         <InputNumber :disabled="view" v-model="nuevoRegistro.precio" inputId="currency-us" mode="currency"

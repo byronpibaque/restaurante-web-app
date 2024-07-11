@@ -82,7 +82,7 @@
       <div class="column-left">
         <div class="container">
           <div class="row">
-            <img src="../public/chef-masculino.png" alt="RestApp" class="company-logo">
+            <img src="assets/chef-masculino.png" alt="RestApp" class="company-logo">
             <div class="col-md-6">
               <p>© 2024 BKSoft</p>
             </div>

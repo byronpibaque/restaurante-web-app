@@ -13,8 +13,8 @@
 
     <Dialog :header="dialogHeader" v-model:visible="mostrarDialogo" @hide="limpiar" class="responsive-dialog1">
       <div>
-        <InputText id="nombre" v-model="nuevoRegistro.nombre" placeholder="Nombre:" class="input-spacing" />
-        <InputText id="valor" v-model="nuevoRegistro.descripcion" placeholder="Descripcion:" class="input-spacing" />
+        <InputText id="nombre" v-model="nuevoRegistro.nombre" placeholder="Nombre:" maxlength="25"  class="input-spacing" />
+        <InputText id="valor" v-model="nuevoRegistro.descripcion" placeholder="Descripcion:" maxlength="25" class="input-spacing" />
       </div>
       <div v-if="!view">
         Agrega detalle:
