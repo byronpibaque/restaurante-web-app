@@ -426,8 +426,13 @@ export default {
     let infoEmpleado = ref({});
     let cajaSistema = ref({});
     listenEvent('mensaje',(data)=>{
-      console.log(data)
-      toast(data.message,{
+      let msj="";
+      if(data.message){
+        msj = data.message;
+      }else{
+        msj=data;
+      }
+      toast(msj,{
         autoClose: 2000,
       });
     });
