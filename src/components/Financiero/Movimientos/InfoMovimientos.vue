@@ -194,7 +194,7 @@ export default {
         });
         if(empleado_caja && rolesEsAdminOCaja ){
           const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-          if(response.success){
+          if(response.id_arqueo_caja){
             if(response.estado==='Activo'){
               this.estadoCaja=true;
             }else if(response.estado==='Finalizado'){
@@ -206,10 +206,11 @@ export default {
               });
             }
           }else{
+            console.log(response)
             this.$swal.fire({
               icon: "error",
               title: "Ups 😢",
-              text: `${response.data}`,
+              text: `${response}`,
             });
           }
         }else{
@@ -297,12 +298,6 @@ export default {
         }
       } catch (e) {
         console.error("Error en listar:", e);
-        const data = e.response ? e.response.data : {};
-        this.$swal.fire({
-          icon: "error",
-          title: "Upss.. 😢",
-          text: `Algo salió mal: ${data.message || "Error desconocido"}`,
-        });
       }
     },
     ver(item) {

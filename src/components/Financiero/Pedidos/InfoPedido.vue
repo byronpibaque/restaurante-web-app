@@ -376,7 +376,6 @@ export default {
     this.getSucursal();
     this.getMenus();
     this.getEstadosPedidos();
-    this.comprobarEstadoCaja();
 
     if (this.params.sucursal_id) {
       this.cargaDataParaPedido(this.params);
@@ -409,7 +408,7 @@ export default {
       estado_pedido: "",
       update: false,
       activeIndex: 1,
-      estadoCaja:false,
+      estadoCaja:true,
       dates:null,
       esDelivery:false,
       nombre_cliente:"",
@@ -584,7 +583,7 @@ export default {
           }else{
             this.$swal.fire({
               icon: "error",
-              title: "Ups1 😢",
+              title: "Ups 😢",
               text: `${response.data}`,
             });
           }

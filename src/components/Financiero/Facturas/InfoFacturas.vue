@@ -2,7 +2,7 @@
   <span class="text-title">Facturas</span>
 
   <TabView :activeIndex.sync="activeIndex" @tab-change="limpiarTabs">
-    <TabPanel :disabled="!estadoCaja">
+    <TabPanel :disabled="estadoCaja">
       <template #header>
         <div class="flex align-items-center gap-2">
           <i class="pi pi-plus"></i>
@@ -362,7 +362,7 @@ export default {
         });
         if(empleado_caja && rolesEsAdminOCaja ){
           const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-          if(response.success){
+          if(response.estado){
             if(response.estado==='Activo'){
               this.estadoCaja=true;
             }else if(response.estado==='Finalizado'){
@@ -370,6 +370,7 @@ export default {
               this.$swal.fire({
                 icon: "warning",
                 title: "Ups 😢",
+                timer: 1000,
                 text: `El arqueo de caja esta cerrado, no se pueden realizar mas acciones.`,
               });
             }
@@ -377,7 +378,8 @@ export default {
             this.$swal.fire({
               icon: "error",
               title: "Ups 😢",
-              text: `${response.data}`,
+              timer: 1000,
+              text: `${response}`,
             });
           }
         }else{
