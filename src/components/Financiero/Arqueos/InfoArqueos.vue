@@ -199,7 +199,7 @@ export default {
         });
         if(empleado_caja && rolesEsAdminOCaja ){
           const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-          if(response.success){
+          if(response.id_arqueo_caja){
             if(response.estado==='Activo'){
               this.estadoCaja=true;
             }else if(response.estado==='Finalizado'){
@@ -211,11 +211,7 @@ export default {
               });
             }
           }else{
-            this.$swal.fire({
-              icon: "error",
-              title: "Ups 😢",
-              text: `${response.data}`,
-            });
+            console.log(response);
           }
         }else{
           this.estadoCaja=true;
@@ -317,9 +313,9 @@ export default {
     async listar(estado = "",dates = null) {
       try {
         const empleado_caja = this.$store.state.cajas[0];
-
+        console.log(empleado_caja.id_empleado_caja);
         let params = {
-          empleado_caja_id: empleado_caja.id_empleado_caja,
+          empleado_id: empleado_caja.id_empleado_caja,
           estado: estado || "Activo"
         };
 
@@ -342,12 +338,6 @@ export default {
         }
       } catch (e) {
         console.log(e);
-        const data = e.response;
-        this.$swal.fire({
-          icon: "error",
-          title: "Upss.. 😢",
-          text: `Algo salió mal: ${data.data.message}`,
-        });
       }
     },
 

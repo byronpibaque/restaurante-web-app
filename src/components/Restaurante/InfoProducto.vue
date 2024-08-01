@@ -10,7 +10,7 @@
         <Button label="Refrescar" icon="pi pi-sync" class="p-button-success" @click="listar"></Button>
       </div>
       <div class="col-12 md:col-6 lg:col-3">
-        <InputText v-model="busquedaBHerramienta" class="" placeholder="Buscar:" @keyup="filtrar(busqueda)"></InputText>
+        <InputText v-model="busquedaBHerramienta" class="" placeholder="Buscar:" @keyup="filtrar(busquedaBHerramienta)"></InputText>
       </div>
       <div class="col-12 md:col-6 lg:col-3 xl:col-3">
         <AutoComplete id="estados_sistemas" placeholder="Filtra por estados:" v-model="estado_sistema"
@@ -381,14 +381,14 @@ export default {
           params.estado = filtro
         } else if (!filtro) {
           params.estado='Activo'
-        } else if (categoriaId) {
-          params.categoria_id = categoriaId.value
-        } else if (impuestoId) {
-          params.impuesto_id = impuestoId.value
-        } else {
-         
         }
-
+        if (categoriaId) {
+          params.categoria_id = categoriaId.value
+        }
+        if (impuestoId) {
+          params.impuesto_id = impuestoId.value
+        }
+        console.log(params);
         const response = await this.$api.post(`${this.endpoint}/filter`, params);
         const resp = response.data;
         if (resp.success === true) {
