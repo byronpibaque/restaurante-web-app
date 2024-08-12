@@ -49,22 +49,22 @@ const infoFacturaService = {
     },
     emitirFactura: async (api, params) => {
         try {
-            const response = await api.post("/emitir", params);
+            const response = await api.post("/infoFactura/emitir", params);
+            console.log(response.data.data);
             const resp = response.data;
-            if (resp.success === true) {
-                return resp;
+            if (resp) {
+                return resp.data;
             }
         } catch (e) {
-            const err = e.response;
-            return err.data;
+            return e;
         }
     },
     consultarFactura: async (api, params) => {
         try {
-            const response = await api.post("/consultar", params);
+            const response = await api.post("/infoFactura/consultar", params);
             const resp = response.data;
-            if (resp.success === true) {
-                return resp;
+            if (resp) {
+                return resp.data;
             }
         } catch (e) {
             const err = e.response;
@@ -73,7 +73,7 @@ const infoFacturaService = {
     },
     eliminarFactura: async (api, params) => {
         try {
-            const response = await api.post("/eliminar", params);
+            const response = await api.post("/infoFactura/eliminar", params);
             const resp = response.data;
             if (resp.success === true) {
                 return resp;

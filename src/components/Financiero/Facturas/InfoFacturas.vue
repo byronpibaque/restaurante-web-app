@@ -1,6 +1,5 @@
 <template>
   <span class="text-title">Facturas</span>
-
   <TabView :activeIndex.sync="activeIndex" @tab-change="limpiarTabs">
     <TabPanel :disabled="estadoCaja">
       <template #header>
@@ -214,6 +213,7 @@
       </div>
     </TabPanel>
   </TabView>
+  <EspereDialog  ref="EspereDialog"></EspereDialog>
 </template>
 
 <script>
@@ -250,11 +250,12 @@ import generaPdfService from "@/components/services/generatePdfService.js";
 import moment from "moment";
 import admiFormaPagoService from "@/components/services/admiFormaPagoService.js";
 import infoCajaService from "@/components/services/infoCajaService.js";
-
+import EspereDialog from "@/components/EspereDialog.vue";
 
 export default {
   name: 'InfoFactura',
   components: {
+    EspereDialog,
     AdmiPersonaDialog,
     DataTable,
     Column,
@@ -328,6 +329,7 @@ export default {
         usuario_creacion: "",
         usuario_modificacion: "",
         estadoCaja: false,
+        loadingDialog: false,
       },
     }
   },
@@ -432,6 +434,8 @@ export default {
               } else if (element.producto_id) {
                 const respProducto = await infoProductoService.getById(this.$api, element.producto_id);
                 if (respProducto) {
+                  respProducto.pedido_id = element.pedido_id;
+                  respProducto.id_pedido_det = element.id_pedido_det;
                   respProducto.cantidad = 1;
                   respProducto.menu_id = element.menu_id;
                   this.datos.push(respProducto);
@@ -489,7 +493,7 @@ export default {
     async anularFactura(item) {
       try {
         item.estado = "Anulado";
-        const response = await infoFacturaService.update(this.$api, item.id_pedido, item);
+        const response = await infoFacturaService.update(this.$api, item.id_factura, item);
         if (response.success === true) {
           this.$swal.fire({
             icon: "success",
@@ -575,6 +579,7 @@ export default {
     },
     async guardarFactura() {
       try {
+        await this.showEsperaDialog();
         const now = moment().format("YYYY/MM/DD");
         const items = [];
         const formaPago = [{ "tipo": null }];
@@ -632,9 +637,8 @@ export default {
           const empleado_caja = this.$store.state.cajas[0];
           const responseCaja = await infoCajaService.getById(this.$api, empleado_caja.caja_id);
           if (responseCaja) {
-            dataFacturaAzure.emisor.secuencial = responseCaja.secuencial;
-          }
-
+            dataFacturaAzure.emisor.secuencial = String(responseCaja.secuencial).padStart(9, '0');          }
+            dataFacturaAzure.id_factura = resFactura.id_factura;
           for (const element of this.datos) {
             const itemsAzure = await this.fillItemsAzure(element, resFactura.id_factura);
             if (itemsAzure) {
@@ -647,9 +651,10 @@ export default {
           if (bandera) {
             const responseAzur = await infoFacturaService.emitirFactura(this.$api, dataFacturaAzure);
             if (responseAzur.creado) {
+              await this.hideEsperaDialog();
               this.showSuccessAlert();
-              await this.verificaComprobante(responseAzur.claveacceso);
               this.limpiar();
+              await this.verificaComprobante({claveacceso: responseAzur.claveacceso});
               await this.listarFacturas('Guardada', this.sucursal_id);
             }
           }
@@ -714,7 +719,7 @@ export default {
         if (pedidoDetResponse.plato_id != null) {
           const responsePlato = await infoPlatoService.getById(this.$api, pedidoDetResponse.plato_id);
           const impResponse = await admiImpuestoService.getById(this.$api, responsePlato.impuesto_id);
-          itemsAzure.codigo_principal = pedidoDetResponse.plato_id;
+          itemsAzure.codigo_principal = String(pedidoDetResponse.plato_id);
           itemsAzure.descripcion = responsePlato.nombre;
           itemsAzure.precio_unitario = responsePlato.precio;
           itemsAzure.tipo_iva = this.getTipoIva(impResponse.porcentaje);
@@ -722,7 +727,7 @@ export default {
         if (pedidoDetResponse.producto_id != null) {
           const responseProducto = await infoProductoService.getById(this.$api, pedidoDetResponse.producto_id);
           const impResponse = await admiImpuestoService.getById(this.$api, responseProducto.impuesto_id);
-          itemsAzure.codigo_principal = pedidoDetResponse.producto_id;
+          itemsAzure.codigo_principal = String(pedidoDetResponse.producto_id);
           itemsAzure.descripcion = responseProducto.nombre;
           itemsAzure.precio_unitario = responseProducto.precio;
           itemsAzure.tipo_iva = this.getTipoIva(impResponse.porcentaje);
@@ -895,11 +900,13 @@ export default {
         const respuesta = await infoFacturaService.consultarFactura(this.$api, item);
         if (respuesta.estado_texto === "Autorizado") {
           window.open(respuesta.enlace_pdf, '_blank');
+          await this.hideEsperaDialog();
         } else {
           throw respuesta;
         }
       } catch (e) {
         console.error(e);
+        await this.hideEsperaDialog();
         const data = e.response.data;
         this.$swal.fire({
           icon: "error",
@@ -910,6 +917,7 @@ export default {
     },
     async descargarPdfFactura(item) {
       try {
+       await this.showEsperaDialog();
         const params = {
           claveacceso: item.clave_acceso
         };
@@ -926,6 +934,7 @@ export default {
     },
     async descargarComprobantePdf(item) {
       try {
+        await this.showEsperaDialog();
         const detalle = [];
         const data = {
               "clienteDireccion": null,
@@ -943,6 +952,21 @@ export default {
         ;
         const facturaRes = await infoFacturaService.getById(this.$api, item.id_factura);
         if (facturaRes) {
+          data.claveAcceso = facturaRes.clave_acceso;
+          data.numComprobante = facturaRes.id_factura;
+          data.total = facturaRes.total_factura;
+          data.desc = facturaRes.total_impuesto;
+          data.imp = facturaRes.impuesto_total;
+          data.subTotal = facturaRes.total_con_impuesto;
+          const clienteRes = await infoClienteService.getById(this.$api, facturaRes.cliente_id);
+          if (clienteRes) {
+            const personaRes = await admiPersonaService.getById(this.$api, clienteRes.persona_id);
+            if (personaRes) {
+              data.clienteNombre = personaRes.nombre + " " + personaRes.apellido;
+              data.clienteDireccion = personaRes.direccion;
+              data.clienteTelefono = personaRes.celular;
+            }
+          }
           const facturaDetArr = await infoFacturaDetService.getByFilter(this.$api, {factura_id:item.id_factura});
           if (facturaDetArr.length > 0) {
             for (let element of facturaDetArr) {
@@ -975,9 +999,11 @@ export default {
         }
         const response = await generaPdfService.generatePdf(this.$api, 'pdf-ticket-factura', data)
         if (response) {
+         await this.hideEsperaDialog();
           window.open(response, '_blank');
         }
       } catch (e) {
+        await this.hideEsperaDialog();
         const data = e.response.data;
         this.$swal.fire({
           icon: "error",
@@ -985,8 +1011,19 @@ export default {
           text: `Algo salió mal: ${data.data}`,
         });
       }
+    },
+    async showEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.show();
+      }
+    },
+    async hideEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.hide();
+      }
     }
   },
+
 }
 </script>
 

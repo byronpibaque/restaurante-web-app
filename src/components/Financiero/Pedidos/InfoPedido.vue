@@ -29,13 +29,12 @@
         </div>
         <div class="col-6">
           <AutoComplete id="menus" :disabled="view" class="w-12" placeholder="Menú:" v-model="nuevoRegistro.menuId"
-                        :suggestions="menuArray" @complete="searchMenus" dropdown
-                        @keypress.enter="procesarMenuDetalle(nuevoRegistro.menuId.value)"
-                        @input="procesarMenuDetalle(nuevoRegistro.menuId.value)" field="label"/>
+            :suggestions="menuArray" @complete="searchMenus" dropdown
+            @item-select="procesarMenuDetalle($event.value)" field="label"/>
         </div>
 
         <div class="col-6">
-          <Checkbox v-model="esDelivery" indeterminate binary />
+          <Checkbox v-model="esDelivery" indeterminate binary @click="esDeliveryAction" />
           <label for="ingredient1" class="ml-2">
             <i class="fas fa-bicycle" style="font-size: 1.5rem"></i> Es delivery?
           </label>
@@ -314,6 +313,8 @@
       </div>
     </TabPanel>
   </TabView>
+  <EspereDialog  ref="EspereDialog"></EspereDialog>
+
 </template>
 
 <script>
@@ -346,11 +347,13 @@ import moment from "moment";
 import Checkbox from "primevue/checkbox";
 import infoMesaService from "@/components/services/infoMesaService.js";
 import generaPdfService from "@/components/services/generatePdfService.js";
+import EspereDialog from "@/components/EspereDialog.vue";
 
 
 export default {
   name: 'InfoPedido',
   components: {
+    EspereDialog,
     DataTable,
     Column,
     TabPanel,
@@ -452,6 +455,18 @@ export default {
   mounted() {
   },
   methods: {
+    async esDeliveryAction(){
+      const responseProducto = await infoProductoService.getByFilter(this.$api,{nombre:'RECARGO DELIVERY'});
+      let deliveryRecargoObj = {};
+      if(responseProducto.length>0){
+         deliveryRecargoObj = responseProducto[0];
+      }
+      if(this.esDelivery){
+        this.agregarDetalle(deliveryRecargoObj);
+      }else{
+        this.eliminarDetalle(deliveryRecargoObj);
+      }
+    },
     async descargarComprobantePdfDelivery(item){
       try {
         const responsePedidoDet = await infoPedidoDetService.getByFilter(this.$api,{pedido_id:item.id_pedido});
@@ -1013,6 +1028,7 @@ export default {
     },
     async guardarPedido() {
       try {
+        await this.showEsperaDialog();
         let bandera = false;
         let requestPedido = {};
         if (this.esAdminSistema) {
@@ -1071,6 +1087,7 @@ export default {
 
           }
           if (bandera) {
+            await this.hideEsperaDialog();
             this.$swal.fire({
               icon: "success",
               title: "Bien.. ✅",
@@ -1081,7 +1098,13 @@ export default {
           }
         }
       } catch (error) {
+        await this.hideEsperaDialog();
         console.error(error);
+        this.$swal.fire({
+          icon: "error",
+          title: "Ocurrió un error",
+          text: `Ocurrío un error al guardar el pedido.`,
+        });
       }
     },
     async procesarMenuDetalle(item) {
@@ -1406,6 +1429,16 @@ export default {
     limpiarTabs() {
       this.limpiar()
     },
+    async showEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.show();
+      }
+    },
+    async hideEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.hide();
+      }
+    }
   },
 }
 </script>

@@ -91,6 +91,8 @@
       </div>
     </Dialog>
   </div>
+  <EspereDialog  ref="EspereDialog"></EspereDialog>
+
 </template>
 
 <script>
@@ -105,10 +107,12 @@ import admiPersonaService from "@/components/services/admiPersonasService";
 import admiParametrosService from "@/components/services/admiParametrosService";
 import Divider from "primevue/divider";
 import admiSucursalService from "@/components/services/admiSucursalesService";
+import EspereDialog from "@/components/EspereDialog.vue";
 
 export default {
   name: "AdmiPersonaDialog",
   components: {
+    EspereDialog,
     DataTable,
     Column,
     Button,
@@ -242,6 +246,7 @@ export default {
     },
     async agregar() {
       try {
+        await this.showEsperaDialog();
         let bandera = false;
         this.registro.estado = "Activo";
         this.registro.usuario_creacion = this.$store.state.empleado.usuario;
@@ -311,6 +316,7 @@ export default {
             }
           }
           if (bandera) {
+            await this.hideEsperaDialog();
             this.$emit("registro-agregado");
             this.closeDialog();
             this.$swal.fire({
@@ -321,6 +327,7 @@ export default {
           }
         }
       } catch (e) {
+        await this.hideEsperaDialog();
         console.log(e);
         const data = e.response;
         this.$swal.fire({
@@ -348,6 +355,7 @@ export default {
 
     async actualizar() {
       try {
+        await this.showEsperaDialog();
         let bandera = false;
         this.registro.estado = "Activo";
         this.registro.usuario_creacion = this.$store.state.empleado.usuario;
@@ -410,6 +418,7 @@ export default {
 
           }
           if (bandera) {
+            await this.hideEsperaDialog();
             this.$emit("registro-agregado");
             this.closeDialog();
             this.$swal.fire({
@@ -420,6 +429,7 @@ export default {
           }
 
         } else {
+         await this.hideEsperaDialog();
           this.dialogVisible = false;
           this.$swal.fire({
             icon: "error",
@@ -565,6 +575,17 @@ export default {
         console.log(e.response);
       }
     },
+    async showEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.show();
+      }
+    },
+    async hideEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.hide();
+      }
+    }
+
   },
 };
 </script>

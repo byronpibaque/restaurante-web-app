@@ -109,6 +109,7 @@
       <Column field="estado" header="Estado"></Column>
     </DataTable>
   </div>
+  <EspereDialog  ref="EspereDialog"></EspereDialog>
 </template>
 
 <script>
@@ -124,9 +125,11 @@ import infoMesasEstadosDialog from '../Restaurante/options/infoMesasEstadosDialo
 import InputNumber from "primevue/inputnumber";
 import admiCategoriaService from "../services/admiCategoriasService";
 import admiImpuestoService from "../services/admiImpuestosService";
+import EspereDialog from "@/components/EspereDialog.vue";
 
 export default {
   components: {
+    EspereDialog,
     DataTable,
     Column,
     Button,
@@ -347,6 +350,7 @@ export default {
     },
     async agregar() {
       try {
+        await this.showEsperaDialog();
         this.nuevoRegistro.estado = 'Activo';
         this.nuevoRegistro.usuario_creacion = this.$store.state.empleado.usuario;
         this.nuevoRegistro.usuario_modificacion = this.$store.state.empleado.usuario;
@@ -355,6 +359,7 @@ export default {
         const resCab = await this.$api.post(`${this.endpoint}`, this.nuevoRegistro);
         const respuesta = resCab.data;
         if (respuesta.success === true) {
+          await this.hideEsperaDialog();
           this.mostrarDialogo = false;
           this.limpiar();
           this.listar();
@@ -365,6 +370,7 @@ export default {
           });
         }
       } catch (e) {
+        await this.hideEsperaDialog();
         const data = e.response;
         this.$swal.fire({
           icon: "error",
@@ -444,6 +450,7 @@ export default {
     },
     async actualizar() {
       try {
+        await this.showEsperaDialog();
         if (this.nuevoRegistro.impuestoId.value) {
           this.nuevoRegistro.impuesto_id = this.nuevoRegistro.impuestoId.value
         }
@@ -456,6 +463,7 @@ export default {
         );
         const respuesta = resCab.data;
         if (respuesta.success === true) {
+          await this.hideEsperaDialog();
           this.mostrarDialogo = false;
           this.limpiar();
           this.listar();
@@ -466,6 +474,7 @@ export default {
           });
         }
       } catch (e) {
+        await this.hideEsperaDialog();
         const data = e.response;
         this.mostrarDialogo = false;
         console.log(e);
@@ -525,6 +534,16 @@ export default {
         });
       }
     },
+    async showEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.show();
+      }
+    },
+    async hideEsperaDialog() {
+      if(this.$refs.EspereDialog){
+        this.$refs.EspereDialog.hide();
+      }
+    }
   },
 };
 </script>
