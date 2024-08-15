@@ -38,11 +38,15 @@
           <label for="ingredient1" class="ml-2">
             <i class="fas fa-bicycle" style="font-size: 1.5rem"></i> Es delivery?
           </label>
+          <Checkbox v-model="addTarrina" indeterminate binary @click="addTarrinaAction" />
+            <label for="ingredient1" class="ml-2">
+              <i class="fas fa-plus" style="font-size: 1.5rem"></i> Agregar Tarrina?
+            </label>
         </div>
         <div class="col-9">
           <InputText v-if="esDelivery" class="input-spacing" v-model="nombre_cliente" placeholder="Nombre cliente:"/>
           <InputText v-if="esDelivery" class="input-spacing" v-model="direccion_cliente" placeholder="Dirección cliente:"/>
-          <InputText v-if="esDelivery" class="input-spacing" v-model="telefono_cliente" placeholder="Teléfono cliente:"/>
+          <InputText v-if="esDelivery" class="input-spacing" v-model="telefono_cliente" placeholder="Observación:"/>
         </div>
         <br>
         <Dialog :header="'Items'" v-model:visible="mostrarDialogo" style="width: 90%;"
@@ -414,6 +418,7 @@ export default {
       estadoCaja:true,
       dates:null,
       esDelivery:false,
+      addTarrina:false,
       nombre_cliente:"",
       direccion_cliente:"",
       telefono_cliente:"",
@@ -465,6 +470,18 @@ export default {
         this.agregarDetalle(deliveryRecargoObj);
       }else{
         this.eliminarDetalle(deliveryRecargoObj);
+      }
+    },
+    async addTarrinaAction(){
+      const responseProducto = await infoProductoService.getByFilter(this.$api,{nombre:'TARRINA'});
+      let tarrinaObj = {};
+      if(responseProducto.length>0){
+         tarrinaObj = responseProducto[0];
+      }
+      if(this.addTarrina){
+        this.agregarDetalle(tarrinaObj);
+      }else{
+        this.eliminarDetalle(tarrinaObj);
       }
     },
     async descargarComprobantePdfDelivery(item){
@@ -1110,7 +1127,7 @@ export default {
     async procesarMenuDetalle(item) {
       try {
         let params = {};
-        params.menu_id = item;
+        params.menu_id = item.value;
         params.estado = "Activo";
         const response = await this.$api.post(`${this.endPointMenuDet}/filter`, params);
         const res = response.data;
@@ -1135,7 +1152,7 @@ export default {
           this.calculoValTotales();
         }
       } catch (error) {
-        console.log(error);
+        console.log(error.response);
       }
     },
     async searchMenus(event) {

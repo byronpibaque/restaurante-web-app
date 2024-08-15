@@ -531,6 +531,7 @@ export default {
         const response = await infoFacturaService.getByFilter(this.$api, params)
         if (response) {
           this.datosPedidos = response;
+          console.log(this.datosPedidos);
         }
       } catch (e) {
         console.error(e);
