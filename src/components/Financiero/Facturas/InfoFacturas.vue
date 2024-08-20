@@ -172,6 +172,13 @@
                         @complete="searchEstadosFacturas"
                         @keypress.enter="listarFacturas(estado_pedido,busquedaJson.sucursalId)"/>
         </div>
+        <div class="col-12 md:col-6 lg:col-3 xl:col-3">
+          <Calendar v-model="dates" selectionMode="range" :manualInput="false" />
+        </div>
+        <div class="col-12 md:col-6 lg:col-3 xl:col-3">
+          <Button icon="pi pi-search" severity="success" rounded aria-label="Search" @click="listarFacturas(estado_pedido,busquedaJson.sucursalId,dates)" />
+        </div>
+  
       </div>
       <div>
         <DataTable :value="datosPedidos" class="responsive-datatable">
@@ -197,14 +204,22 @@
                       text @click="verFactura(slotProps.data)"/>
             </template>
           </Column>
+          <Column field="razon_social_comprador" header="Usr. Creacion"></Column>
+          <Column field="fecha_creacion" header="Fecha">
+            <template #body="slotProps">
+              {{ formatDate(slotProps.data) }}
+            </template>
+          </Column>
+          <Column field="clave_acceso" header="Clave de Acceso"></Column>
+          <Column field="forma_pago" header="Clave de Acceso"></Column>
           <Column field="pedido_id" header="N. Orden">
             <template #body="slotProps">
               {{ slotProps.data.pedido_id }}
             </template>
           </Column>
-          <Column field="precio" header="Precio">
+          <Column field="total_con_impuesto" header="Total">
             <template #body="slotProps">
-              {{ formatDate(slotProps.data) }}
+              {{ slotProps.data.total_con_impuesto }}
             </template>
           </Column>
           <Column field="usuario_creacion" header="Usr. Creacion"></Column>
@@ -251,6 +266,7 @@ import moment from "moment";
 import admiFormaPagoService from "@/components/services/admiFormaPagoService.js";
 import infoCajaService from "@/components/services/infoCajaService.js";
 import EspereDialog from "@/components/EspereDialog.vue";
+import Calendar from 'primevue/calendar';
 
 export default {
   name: 'InfoFactura',
@@ -272,7 +288,8 @@ export default {
     Splitter,
     SplitterPanel,
     Dropdown,
-    Tooltip
+    Tooltip,
+    Calendar
   },
   created() {
     this.listarFacturas();
@@ -331,6 +348,7 @@ export default {
         estadoCaja: false,
         loadingDialog: false,
       },
+      dates:null,
     }
   },
   props: ['pedido_id'],
@@ -405,7 +423,7 @@ export default {
       this.$refs.AdmiPersonaDialog.openDialogCliente();
     },
     formatDate(rowData) {
-      const fecha = new Date(rowData.fecha_factura);
+      const fecha = new Date(rowData.fecha_creacion);
       return `${fecha.getFullYear()}-${this.pad(fecha.getMonth() + 1)}-${this.pad(fecha.getDate())}`;
     },
     pad(num) {
@@ -513,7 +531,15 @@ export default {
         });
       }
     },
-    async listarFacturas(filtro = "", busqueda = {}) {
+    formatFecha(fecha) {
+      const momentFecha = moment(fecha).utc();
+      if (momentFecha.isValid()) {
+        return momentFecha.format("YYYY-MM-DD");
+      } else {
+        return 'Fecha inválida';
+      }
+    },
+    async listarFacturas(filtro = "", busqueda = {}, dates = null) {
       try {
         this.limpiar();
         this.datosPedidos = [];
@@ -526,6 +552,18 @@ export default {
           if (busqueda && busqueda.value) {
             params.sucursal_id = busqueda.value;
           }
+        }
+        if (dates && dates.length > 0) {
+          
+          let fechaInicial = this.formatFecha(dates[0]);
+          let fechaFinal = dates.length > 1 ? this.formatFecha(dates[1]) : fechaInicial;
+
+          params.fecha_inicio = fechaInicial;
+          params.fecha_fin = fechaFinal;
+        } else {
+          let fechaActual = moment().format("YYYY-MM-DD");
+          params.fecha_inicio = fechaActual;
+          params.fecha_fin = fechaActual;
         }
 
         const response = await infoFacturaService.getByFilter(this.$api, params)

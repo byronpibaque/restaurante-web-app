@@ -82,7 +82,16 @@
       <div class="column-left">
         <div class="container">
           <div class="row">
-            <img src="../public/chef-masculino.png" alt="RestApp" class="company-logo">
+            <table>
+              <tr>
+                <td>
+                  <img src="../public/chef-masculino.png" alt="RestApp" class="company-logo" @click="goHome()" v-tooltip="'Ir a la pantalla principal'">
+                </td>
+                <td>
+                  <Button icon="fas fa-comments"  @click="openPosition('bottom')" v-tooltip="'Mensajería'" severity="info" rounded aria-label="User" class="custom-button" />
+                </td>
+              </tr>
+            </table>
             <div class="col-md-6">
               <p>© 2024 BKSoft</p>
             </div>
@@ -114,6 +123,32 @@
       </div>
     </div>
   </div>
+
+  <Dialog v-model:visible="visibleMensajeria" header="Mensajería" :style="{ width: '25rem' }" :position="position" :modal="true" :draggable="false">
+    <div class="items-center">
+      <label for="informacion" class="font-semibold w-24">Información del cliente</label>
+      <br>
+      <input type="text" class="p-inputtext input-spacing" v-model="clienteInfo"
+                       placeholder="Info. Cliente" />
+    </div>
+    <div class="items-center">
+      <label for="username" class="font-semibold w-24">Dirección del cliente</label>
+      <br>
+      <input type="direccion"  class="p-inputtext input-spacing" v-model="clienteDir"
+                       placeholder="Dir. Cliente" />
+    </div>
+    <div class="items-center gap-4 mb-8">
+      <label for="observacion" class="font-semibold w-24">Observación</label>
+      <br>
+      <Textarea v-model="clienteObservacion" autoResize rows="5" cols="30" class="p-inputtext input-spacing" />
+      
+    </div>
+    <div class="flex justify-end gap-2">
+      <Button type="button" label="Cancel" severity="secondary" @click="visibleMensajeria = false"></Button>
+      <Button type="button" label="Enviar" severity="success" @click="generarPdfTicketMensaje()"></Button>
+    </div>
+  </Dialog>
+
 </template>
 
 <script>
@@ -131,14 +166,19 @@ import { toast } from 'vue3-toastify';
 import useSocket from "@/components/services/useSocket.js";
 import infoArqueoCajaEmpleadoService from "@/components/services/infoArqueoCajaEmpleadoService.js";
 import Button from "primevue/button";
+import Textarea from 'primevue/textarea';
+import generaPdfService from "@/components/services/generatePdfService.js";
 
 export default {
   components: {
     Menubar,
     Dialog,
-    Button
+    Button,
+    Tooltip,
+    Textarea
   },
   setup() {
+    // Variables
     const displayProfile = ref(false);
     const mainItems = ref([
       {
@@ -150,145 +190,44 @@ export default {
         content: 'Administración',
         icon: 'pi pi-briefcase',
         items: [
-          {
-            id: 'parametros',
-            content: 'Parámetros',
-            icon: 'pi pi-sliders-v',
-          },
-          {
-            id: 'categorias',
-            content: 'Categorías',
-            icon: 'pi pi-tags'
-          },
-          {
-            id: 'f_pagos',
-            content: 'Formas de Pago',
-            icon: 'pi pi-money-bill'
-          },
-          {
-            id: 'impuestos',
-            content: 'Impuestos',
-            icon: 'pi pi-dollar'
-          },
-          {
-            id: 'roles',
-            content: 'Roles',
-            icon: 'pi pi-id-card'
-          },
-          {
-            id: 'personas',
-            content: 'Personas',
-            icon: 'pi pi-users'
-          },
-          {
-            id: 'propietarios',
-            content: 'Propietarios',
-            icon: 'pi pi-users'
-          },
-          {
-            id: 'usuarios',
-            content: 'Usuarios',
-            icon: 'pi pi-users'
-          }
+          { id: 'parametros', content: 'Parámetros', icon: 'pi pi-sliders-v' },
+          { id: 'categorias', content: 'Categorías', icon: 'pi pi-tags' },
+          { id: 'f_pagos', content: 'Formas de Pago', icon: 'pi pi-money-bill' },
+          { id: 'impuestos', content: 'Impuestos', icon: 'pi pi-dollar' },
+          { id: 'roles', content: 'Roles', icon: 'pi pi-id-card' },
+          { id: 'personas', content: 'Personas', icon: 'pi pi-users' },
+          { id: 'propietarios', content: 'Propietarios', icon: 'pi pi-users' },
+          { id: 'usuarios', content: 'Usuarios', icon: 'pi pi-users' }
         ]
-      }, {
+      },
+      {
         content: 'Contabilidad',
         icon: 'pi pi-wallet',
         items: [
-          {
-            id: 'compras',
-            content: 'Ingresos',
-            icon: 'fas fa-cart-shopping',
-          },
-          {
-            id: 'facturas',
-            content: 'Facturas',
-            icon: 'pi pi-shopping-bag',
-          },
-          {
-            id: 'pedidos',
-            content: 'Pedidos',
-            icon: 'pi pi-book'
-          },
-          {
-            id: 'clientes',
-            content: 'Clientes',
-            icon: 'pi pi-user'
-          },
-          {
-            id: 'proveedores',
-            content: 'Proveedores',
-            icon: 'fas fa-dolly'
-          },
-          {
-            id: 'movimientos',
-            content: 'Movimientos',
-            icon: 'fas fa-cash-register'
-          },
-          {
-            id: 'arqueos',
-            content: 'Arqueos cajas',
-            icon: 'fas fa-sack-dollar'
-          }
+          { id: 'compras', content: 'Ingresos', icon: 'fas fa-cart-shopping' },
+          { id: 'facturas', content: 'Facturas', icon: 'pi pi-shopping-bag' },
+          { id: 'pedidos', content: 'Pedidos', icon: 'pi pi-book' },
+          { id: 'clientes', content: 'Clientes', icon: 'pi pi-user' },
+          { id: 'proveedores', content: 'Proveedores', icon: 'fas fa-dolly' },
+          { id: 'movimientos', content: 'Movimientos', icon: 'fas fa-cash-register' },
+          { id: 'arqueos', content: 'Arqueos cajas', icon: 'fas fa-sack-dollar' }
         ]
-      }, {
+      },
+      {
         content: 'Restaurante',
         icon: 'pi pi-bars',
         items: [
-          {
-            id: 'restaurantes',
-            content: 'Restaurantes',
-            icon: 'pi pi-building'
-          },
-          {
-            id: 'sucursales',
-            content: 'Sucursales',
-            icon: 'pi pi-shop'
-          },
-          {
-            id: 'mesas',
-            content: 'Mesas',
-            icon: 'fas fa-utensils',
-          },
-          {
-            id: 'cocinas',
-            content: 'Cocinas',
-            icon: 'fas fa-fire-burner'
-          },
-          {
-            id: 'cajas',
-            content: 'Cajas',
-            icon: 'pi pi-desktop'
-          },
-          {
-            id: 'menus',
-            content: 'Menús',
-            icon: 'pi pi-receipt'
-          },
-          {
-            id: 'platos',
-            content: 'Platos',
-            icon: 'pi pi-book'
-          },
-          {
-            id: 'productos',
-            content: 'Productos',
-            icon: 'fas fa-kitchen-set'
-          },
-          /*{
-            id: 'reservaciones',
-            content: 'Reservaciones',
-            icon: 'fas fa-book-open'
-          }*/
+          { id: 'restaurantes', content: 'Restaurantes', icon: 'pi pi-building' },
+          { id: 'sucursales', content: 'Sucursales', icon: 'pi pi-shop' },
+          { id: 'mesas', content: 'Mesas', icon: 'fas fa-utensils' },
+          { id: 'cocinas', content: 'Cocinas', icon: 'fas fa-fire-burner' },
+          { id: 'cajas', content: 'Cajas', icon: 'pi pi-desktop' },
+          { id: 'menus', content: 'Menús', icon: 'pi pi-receipt' },
+          { id: 'platos', content: 'Platos', icon: 'pi pi-book' },
+          { id: 'productos', content: 'Productos', icon: 'fas fa-kitchen-set' }
         ]
       }
     ]);
-    const logout = () => {
-      store.dispatch('removeToken');
-      displayProfile.value = false;
-      router.push('/login');
-      window.location.reload();
-    }
     const profileItem = ref([
       {
         id: 'perfil',
@@ -303,13 +242,30 @@ export default {
         icon: 'pi pi-sign-out',
         content: 'Cerrar sesión',
         command: () => {
-          logout()
+          logout();
         }
       }
     ]);
-
     const isAuthenticated = computed(() => store.state.isAuthenticated);
     const showPassword = ref(false);
+    const currentPassword = ref("");
+    const newPassword = ref("");
+    const { emitEvent, listenEvent } = useSocket(apiSocket);
+    let infoEmpleado = ref({});
+    let cajaSistema = ref({});
+    const position = ref('center');
+    const visibleMensajeria = ref(false);
+    let clienteInfo = ref('');
+    let clienteDir = ref('');
+    let clienteObservacion = ref('');
+
+    // Funciones
+    const logout = () => {
+      store.dispatch('removeToken');
+      displayProfile.value = false;
+      router.push('/login');
+      window.location.reload();
+    };
 
     function togglePasswordVisibility() {
       showPassword.value = !showPassword.value;
@@ -319,8 +275,6 @@ export default {
       switch (content) {
         case 'home':
           router.push('/');
-          break;
-        case 'administrador':
           break;
         case 'parametros':
           router.push('/admi-parametros');
@@ -338,63 +292,62 @@ export default {
           router.push('/admi-roles');
           break;
         case 'personas':
-          router.push('/admi-personas')
+          router.push('/admi-personas');
           break;
         case 'propietarios':
-          router.push('/admi-propietarios')
+          router.push('/admi-propietarios');
           break;
         case 'usuarios':
-          router.push('/admi-usuarios')
+          router.push('/admi-usuarios');
           break;
         case 'restaurantes':
-          router.push('/admi-restaurantes')
+          router.push('/admi-restaurantes');
           break;
         case 'sucursales':
-          router.push('/admi-sucursales')
+          router.push('/admi-sucursales');
           break;
         case 'mesas':
-          router.push('/info-mesas')
+          router.push('/info-mesas');
           break;
         case 'cocinas':
-          router.push('/info-cocinas')
+          router.push('/info-cocinas');
           break;
         case 'cajas':
-          router.push('/info-cajas')
+          router.push('/info-cajas');
           break;
         case 'platos':
-          router.push('/info-platos')
+          router.push('/info-platos');
           break;
         case 'productos':
-          router.push('/info-productos')
+          router.push('/info-productos');
           break;
         case 'menus':
-          router.push('/info-menus')
+          router.push('/info-menus');
           break;
         case 'clientes':
-          router.push('/info-clientes')
+          router.push('/info-clientes');
           break;
         case 'pedidos':
-          router.push('/info-pedidos')
+          router.push('/info-pedidos');
           break;
         case 'facturas':
-          router.push('/info-facturas')
+          router.push('/info-facturas');
           break;
         case 'compras':
-          router.push('/info-ingresos')
+          router.push('/info-ingresos');
           break;
         case 'proveedores':
-          router.push('/admi-proveedor')
+          router.push('/admi-proveedor');
           break;
         case 'arqueos':
-          router.push('/info-arqueos')
+          router.push('/info-arqueos');
           break;
         case 'movimientos':
-          router.push('/info-movimientos')
+          router.push('/info-movimientos');
           break;
       }
     }
-    const currentPassword = ref("");
-    const newPassword = ref("");
+
     const handleChangePassword = async () => {
       const currentPwd = currentPassword.value;
       const newPwd = newPassword.value;
@@ -421,33 +374,29 @@ export default {
       }
     };
 
-    const { emitEvent,listenEvent } = useSocket(apiSocket);
-
-    let infoEmpleado = ref({});
-    let cajaSistema = ref({});
-    listenEvent('mensaje',(data)=>{
-      let msj="";
-      if(data.message){
-        msj = data.message;
-      }else{
-        msj=data;
-      }
-      toast(msj,{
-        autoClose: 2000,
-      });
+    listenEvent('mensaje', (data) => {
+      let msj = data.message ? data.message : data;
+      toast(msj, { autoClose: 2000 });
     });
+
+    const openPosition = (pos) => {
+      position.value = pos;
+      visibleMensajeria.value = true;
+    };
+
+    const goHome = () => {
+      router.push('/');
+    };
+
     const handleInfoEmpleadoById = async () => {
       if (store.state.isAuthenticated) {
         const response = await infoEmpleadoGetById(api, store.state.empleado.empleado_id);
         try {
           if (response.success === true) {
             infoEmpleado.value = response.data;
-            listenEvent('notificacion',(data)=>{
-              toast(data.notify.message,{
-                autoClose: 2000,
-              });
+            listenEvent('notificacion', (data) => {
+              toast(data.notify.message, { autoClose: 2000 });
             });
-
           }
         } catch (error) {
           console.error('Error al cambiar la contraseña:', error);
@@ -458,31 +407,54 @@ export default {
             text: `Error:${error.data}`
           });
         }
+      }
+    };
+
+    const generarPdfTicketMensaje = async () => {
+      try {
+        const data = {
+          clienteNombre: clienteInfo.value,
+          clienteDireccion: clienteDir.value,
+          clienteTelefono: clienteObservacion.value,
+          mensaje: 'Notificacion'
+        };
+        const response = await generaPdfService.generatePdf(api, 'pdf-ticket-mensaje', data);
+
+        if (response) {
+          window.open(response, '_blank');
+          visibleMensajeria.value = false;
+          clienteInfo.value = '';
+          clienteDir.value = '';
+          clienteObservacion.value = '';
+
+        }
 
       }
+      catch (e) {
+        console.log(e);
+      }
+    };
 
-    }
     watch(
-        () => store.state.isAuthenticated,
-        (newValue, oldValue) => {
-          if (newValue && !oldValue) {
-            handleInfoEmpleadoById();
-          }
+      () => store.state.isAuthenticated,
+      (newValue, oldValue) => {
+        if (newValue && !oldValue) {
+          handleInfoEmpleadoById();
         }
+      }
     );
+
     onMounted(async () => {
       store.dispatch('loadToken');
-
-      if(store.state.cajas[0]){
+      if (store.state.cajas[0]) {
         const empleado_caja = store.state.cajas[0];
         const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-        if(response) {
+        if (response) {
           cajaSistema.value = response;
         }
       }
-
-
     });
+
     return {
       logout,
       mainItems,
@@ -498,10 +470,19 @@ export default {
       newPassword,
       handleInfoEmpleadoById,
       infoEmpleado,
-      cajaSistema
-    }
-  },
-}
+      cajaSistema,
+      openPosition,
+      position,
+      visibleMensajeria,
+      goHome,
+      Textarea,
+      clienteInfo,
+      clienteDir,
+      clienteObservacion,
+      generarPdfTicketMensaje
+    };
+  }
+};
 </script>
 <style scoped>
 .content {
@@ -560,7 +541,14 @@ export default {
 
 .company-logo {
   width: 50px; /* Ajusta el tamaño de la imagen según tus necesidades */
-  margin-left: 10px; /* Espacio entre el nombre y la imagen */
+  margin-left: 15px; /* Espacio entre el nombre y la imagen */
+}
+
+.custom-button {
+  width: 45px; /* Ajusta el ancho del botón según tus necesidades */
+  height: 45px; /* Ajusta la altura del botón según tus necesidades */
+  margin-left: 100%; /* Espacio entre el nombre y la imagen */
+
 }
 
 .column-left {

@@ -147,13 +147,15 @@ export default {
   },
   methods: {
     async descargarComprobantePdf(data){
+      console.log(data);
       const now = moment().format("YYYY-MM-DD");
       const paramsData = {
-        fecha_creacion: now
+        fecha_creacion: data.fecha_creacion
       };
       const responseData = await this.$api.post("/infoArqueo/data",paramsData);
-      const respuesta = responseData.data;
+      const respuesta = responseData.data.data;
       if(respuesta) {
+        console.log(respuesta);
         const params = {
           "usuario": data.usuario_creacion,
           "fechaHora": now,
@@ -313,12 +315,10 @@ export default {
     async listar(estado = "",dates = null) {
       try {
         const empleado_caja = this.$store.state.cajas[0];
-        console.log(empleado_caja.id_empleado_caja);
         let params = {
           empleado_id: empleado_caja.id_empleado_caja,
           estado: estado || "Activo"
         };
-
         if (dates && dates.length > 0) {
           let fechaInicial = this.formatFecha(dates[0]);
           let fechaFinal = dates.length > 1 ? this.formatFecha(dates[1]) : fechaInicial;
@@ -337,7 +337,7 @@ export default {
           this.datos = resp.data;
         }
       } catch (e) {
-        console.log(e);
+        console.log(e.response);
       }
     },
 

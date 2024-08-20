@@ -1041,6 +1041,11 @@ export default {
         this.valSubtotal12 = (subtotal12).toFixed(2);
         this.valSubtotal15 = (subtotal15).toFixed(2);
         this.valTotal = (subtotal + subtotal12 + subtotal15).toFixed(2);
+      }else{
+        this.valSubtotal = 0.00;
+        this.valSubtotal12 = 0.00;
+        this.valSubtotal15 = 0.00;
+        this.valTotal = 0.00;
       }
     },
     async guardarPedido() {
@@ -1351,6 +1356,7 @@ export default {
     },
     eliminarDetalle(data) {
       this.datos = this.datos.filter(item => item.nombre !== data.nombre);
+      this.calculoValTotales();
     },
     agregarDetalle(item) {
       const existe = this.datos.some(elemento => elemento.nombre === item.nombre);
@@ -1368,6 +1374,7 @@ export default {
         this.datos.push(item);
         this.calculoValTotales();
         this.nuevoRegistro.filtraBusqueda="";
+        this.mostrarDialogo = false;
       }
     },
     async buscaPlatoProducto(item) {

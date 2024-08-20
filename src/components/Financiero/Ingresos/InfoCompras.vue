@@ -926,6 +926,7 @@ export default {
         item.cantidad = 1;
         this.datos.push(item);
         this.calculoValTotales();
+        this.mostrarDialogo = false;
       }
     },
     async buscaPlatoProducto(item) {
