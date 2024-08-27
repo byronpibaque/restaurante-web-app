@@ -204,7 +204,7 @@
                       text @click="verFactura(slotProps.data)"/>
             </template>
           </Column>
-          <Column field="razon_social_comprador" header="Usr. Creacion"></Column>
+          <Column field="razon_social_comprador" header="Cliente"></Column>
           <Column field="fecha_creacion" header="Fecha">
             <template #body="slotProps">
               {{ formatDate(slotProps.data) }}
@@ -217,9 +217,9 @@
               {{ slotProps.data.pedido_id }}
             </template>
           </Column>
-          <Column field="total_con_impuesto" header="Total">
+          <Column field="total_factura" header="Total">
             <template #body="slotProps">
-              {{ slotProps.data.total_con_impuesto }}
+              {{ slotProps.data.total_factura }}
             </template>
           </Column>
           <Column field="usuario_creacion" header="Usr. Creacion"></Column>
@@ -298,6 +298,7 @@ export default {
     this.buscaClientes('9999999999999');
     this.fetchPedido(this.$route.params.pedido_id);
     this.comprobarEstadoCaja();
+    this.getFormasPagos();
   },
   data() {
     return {
@@ -446,7 +447,7 @@ export default {
                   respPlato.pedido_id = element.pedido_id;
                   respPlato.id_pedido_det = element.id_pedido_det;
                   respPlato.menu_id = element.menu_id;
-                  respPlato.cantidad = 1;
+                  respPlato.cantidad = element.cantidad;
                   this.datos.push(respPlato);
                 }
               } else if (element.producto_id) {
@@ -454,7 +455,7 @@ export default {
                 if (respProducto) {
                   respProducto.pedido_id = element.pedido_id;
                   respProducto.id_pedido_det = element.id_pedido_det;
-                  respProducto.cantidad = 1;
+                  respProducto.cantidad = element.cantidad;
                   respProducto.menu_id = element.menu_id;
                   this.datos.push(respProducto);
                 }
@@ -569,7 +570,6 @@ export default {
         const response = await infoFacturaService.getByFilter(this.$api, params)
         if (response) {
           this.datosPedidos = response;
-          console.log(this.datosPedidos);
         }
       } catch (e) {
         console.error(e);
@@ -618,6 +618,9 @@ export default {
     },
     async guardarFactura() {
       try {
+        if (!this.validarFormaPago()) {
+          return;
+        }
         await this.showEsperaDialog();
         const now = moment().format("YYYY/MM/DD");
         const items = [];
@@ -695,6 +698,7 @@ export default {
               this.limpiar();
               await this.verificaComprobante({claveacceso: responseAzur.claveacceso});
               await this.listarFacturas('Guardada', this.sucursal_id);
+              window.location.reload();
             }
           }
         }
@@ -736,6 +740,8 @@ export default {
       };
 
       const responseImpuesto = await admiImpuestoService.getById(this.$api, element.impuesto_id);
+      const porcentajeImpuesto = responseImpuesto.porcentaje;
+
       requestFacturaDet.subtotal_impuesto = (requestFacturaDet.total_detalle * responseImpuesto.porcentaje) / 100;
 
       const itemsAzure = {
@@ -760,7 +766,8 @@ export default {
           const impResponse = await admiImpuestoService.getById(this.$api, responsePlato.impuesto_id);
           itemsAzure.codigo_principal = String(pedidoDetResponse.plato_id);
           itemsAzure.descripcion = responsePlato.nombre;
-          itemsAzure.precio_unitario = responsePlato.precio;
+          const precioSinImpuesto = responsePlato.precio / (1 + (porcentajeImpuesto / 100));
+          itemsAzure.precio_unitario = precioSinImpuesto;
           itemsAzure.tipo_iva = this.getTipoIva(impResponse.porcentaje);
         }
         if (pedidoDetResponse.producto_id != null) {
@@ -768,7 +775,8 @@ export default {
           const impResponse = await admiImpuestoService.getById(this.$api, responseProducto.impuesto_id);
           itemsAzure.codigo_principal = String(pedidoDetResponse.producto_id);
           itemsAzure.descripcion = responseProducto.nombre;
-          itemsAzure.precio_unitario = responseProducto.precio;
+          const precioSinImpuesto = responseProducto.precio / (1 + (porcentajeImpuesto / 100));
+          itemsAzure.precio_unitario = precioSinImpuesto;
           itemsAzure.tipo_iva = this.getTipoIva(impResponse.porcentaje);
         }
       }
@@ -824,7 +832,20 @@ export default {
         const response = await this.$api.post(`${this.endPointFormaPago}/filter`, params);
         const respuesta = response.data;
         if (respuesta.success === true) {
-          this.formaPagoArray = respuesta.data;
+          this.formaPagoArray = respuesta.data.map(param => {
+            return {
+              label: param.nombre,
+              value: param.id_forma_pago
+            };
+          });
+          // Pre-select "EFECTIVO" if it exists
+          const efectivo = this.formaPagoArray.find(fp => fp.label === 'EFECTIVO');
+          if (efectivo) {
+            this.nuevoRegistro.formaPagoId = {
+              label: efectivo.label,
+              value: efectivo.value
+            }
+          }
         }
       } catch (e) {
         const data = e.response.data;
@@ -835,6 +856,17 @@ export default {
           timer: 2000,
         });
       }
+    },
+    validarFormaPago() {
+      if (!this.nuevoRegistro.formaPagoId) {
+        this.$swal.fire({
+          icon: "error",
+          title: "Campo obligatorio",
+          text: "Debe seleccionar una forma de pago.",
+        });
+        return false;
+      }
+      return true;
     },
     async searchSucursal(event) {
       try {

@@ -63,13 +63,13 @@
       <Column field="options" header="Options">
         <template #body="slotProps">
           <div class="option-buttons">
-            <Button v-if="slotProps.data.estado=='Activo'"
+            <Button v-if="slotProps.data.estado==='Activo'"
               icon="pi pi-check"
               class="boton-verde"
               v-tooltip="'Cerrar caja'"
               @click="cerrarCaja(slotProps.data)"
             ></Button>
-            <Button  icon="pi pi-receipt" class="boton-azul"
+            <Button v-if="slotProps.data.estado==='Finalizado'"  icon="pi pi-receipt" class="boton-azul"
                      @click="descargarComprobantePdf(slotProps.data)"
                      v-tooltip="'Descargar Reporte'"></Button>
 
@@ -155,7 +155,6 @@ export default {
       const responseData = await this.$api.post("/infoArqueo/data",paramsData);
       const respuesta = responseData.data.data;
       if(respuesta) {
-        console.log(respuesta);
         const params = {
           "usuario": data.usuario_creacion,
           "fechaHora": now,
@@ -273,6 +272,7 @@ export default {
             text: `Actualizado!`,
             icon: "success"
           });
+          this.reloadPage();
         }
       });
     },
