@@ -10,11 +10,14 @@
           v-model="registro.tipo_documento" :suggestions="itemsDet" class="input-spacing" @complete="search" dropdown />
         <InputText :disabled="view" id="numero_identificacion" v-model="registro.numero_identificacion"
           placeholder="Número de Identificación" class="input-spacing" />
-        <InputText :disabled="view" id="nombre" v-model="registro.nombre" placeholder="Nombre" class="input-spacing" />
+        <InputText :disabled="view" id="nombre" v-model="registro.nombre" placeholder="Nombre" 
+        class="input-spacing" @input="updateFields" />
         <InputText :disabled="view" id="apellido" v-model="registro.apellido" placeholder="Apellido"
+         @input="updateFields"
           class="input-spacing" />
         <InputText :disabled="view" id="nombre_pila" v-model="registro.nombre_pila" placeholder="Nombre de Pila"
-          class="input-spacing" />
+          class="input-spacing"
+          readonly />
         <InputText :disabled="view" id="direccion" v-model="registro.direccion" placeholder="Dirección"
           class="input-spacing" />
         <InputText :disabled="view" id="email" v-model="registro.email" placeholder="Email" class="input-spacing" />
@@ -26,7 +29,9 @@
           <Divider />
 
           <InputText :disabled="view" id="razon_social" v-model="registro.razon_social" placeholder="Razon social"
-            class="input-spacing" />
+            class="input-spacing"
+            readonly
+            />
 
         </div>
 
@@ -35,7 +40,8 @@
           <Divider />
 
           <InputText :disabled="view" id="razon_social_comprador" v-model="registro.razon_social_comprador" placeholder="Razon social"
-            class="input-spacing" />
+            class="input-spacing"
+            readonly />
         </div>
 
         <div v-if="proveedor">
@@ -43,7 +49,8 @@
           <Divider />
 
           <InputText :disabled="view" id="razon_social_comprador" v-model="registro.razon_social_proveedor" placeholder="Razon social"
-                     class="input-spacing" />
+                     class="input-spacing"
+                     readonly />
         </div>
 
 
@@ -157,6 +164,13 @@ export default {
     this.getSucursales();
   },
   methods: {
+    updateFields() {
+      const fullName = `${this.registro.nombre} ${this.registro.apellido}`;
+      this.registro.razon_social = fullName;
+      this.registro.nombre_pila = fullName;
+      this.registro.razon_social_comprador = fullName;
+      this.registro.razon_social_proveedor = fullName;
+    },
     async searchSucursales(event) {
       try {
         const empleadoLogin = this.$store.state.empleado;

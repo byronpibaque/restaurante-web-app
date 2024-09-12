@@ -239,6 +239,7 @@ export default {
         title: "Ingresa el total de tu caja",
         input: "number",
         inputAttributes: {
+          step: "0.01",
           autocapitalize: "off"
         },
         showCancelButton: true,

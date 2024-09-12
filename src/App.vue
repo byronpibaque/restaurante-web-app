@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div @actualizar-caja-sistema="updateCajaSistema">
     <div class="content">
       <div v-if="isAuthenticated">
         <div class="menu-container">
@@ -267,6 +267,18 @@ export default {
       window.location.reload();
     };
 
+    const updateCajaSistema = async () => {
+      if (store.state.cajas.length > 0) {
+        const empleado_caja = store.state.cajas[0];
+        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
+        if (response) {
+          console.log(response);
+          
+          cajaSistema.value = response;
+        }
+      }
+    };
+
     function togglePasswordVisibility() {
       showPassword.value = !showPassword.value;
     }
@@ -446,13 +458,7 @@ export default {
 
     onMounted(async () => {
       store.dispatch('loadToken');
-      if (store.state.cajas[0]) {
-        const empleado_caja = store.state.cajas[0];
-        const response = await infoArqueoCajaEmpleadoService.getByIdCajaEmpleado(api, empleado_caja.id_empleado_caja);
-        if (response) {
-          cajaSistema.value = response;
-        }
-      }
+      await updateCajaSistema();
     });
 
     return {

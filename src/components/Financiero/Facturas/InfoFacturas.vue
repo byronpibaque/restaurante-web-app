@@ -192,7 +192,7 @@
                         v-tooltip="'Imprimir Recibo'" class="boton-azul" icon="pi pi-receipt"
                         @click="descargarComprobantePdf(slotProps.data)"></Button>
                 <Button v-if="['En Proceso', 'En Espera','Autorizada', 'Guardada'].includes(slotProps.data.estado)"
-                        v-tooltip="'Descargar PDF'" class="boton-azul" icon="pi pi-receipt"
+                        v-tooltip="'Descargar PDF'" class="boton-verde" icon="fas fa-file-pdf"
                         @click="descargarPdfFactura(slotProps.data)"></Button>
               </div>
             </template>
@@ -485,7 +485,11 @@ export default {
           };
           const responseCliente = await infoClienteService.getByFilter(this.$api, params);
           if (responseCliente.success === false) {
-            throw new Error('No se encontró un registro con N. Id:' + numeroIdentificacion);
+            this.$swal.fire({
+              icon: "error",
+              title: "Upss.. 😢",
+              text: `No se encontró un registro con N. Id: ${numeroIdentificacion}, regístrelo.`,
+            });
           } else {
             const responseAdmiPersona = await admiPersonaService.getById(this.$api, responseCliente[0].persona_id);
             if (responseAdmiPersona) {
@@ -494,6 +498,11 @@ export default {
                 persona: responseAdmiPersona,
                 cliente: responseCliente[0]
               }
+              this.$swal.fire({
+              icon: "success",
+              title: "Cliente encontrado",
+              text: `Cliente: ${responseAdmiPersona.nombre_pila} ✅`,
+            });
             }
           }
         } else {
@@ -698,8 +707,8 @@ export default {
               this.limpiar();
               await this.verificaComprobante({claveacceso: responseAzur.claveacceso});
               await this.listarFacturas('Guardada', this.sucursal_id);
-              window.location.reload();
-            }
+              this.$router.push('/');
+              this.$emit('actualizar-caja-sistema');            }
           }
         }
       } catch (error) {
