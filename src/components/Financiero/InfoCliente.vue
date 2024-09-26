@@ -11,7 +11,7 @@
       </div>
       <div  class="col-12 md:col-6 lg:col-3">
         <InputText v-model="busquedaBHerramienta" class="" placeholder="Buscar:"
-        @keyup="filtrar(busqueda)"></InputText>
+        @keyup="filtrar(busquedaBHerramienta)"></InputText>
       </div>
        <div  class="col-12 md:col-6 lg:col-3 xl:col-3">
         <AutoComplete id="estado_sistema" class="w-6" placeholder="Filtra por estados:" v-model="estado_sistema"
@@ -25,7 +25,7 @@
         ref="AdmiPersonaDialog"></AdmiPersonaDialog>
     </div>
 
-    <DataTable :value="datos" class="responsive-datatable">
+    <DataTable :value="datos" class="responsive-datatable" :paginator="true" :rows="rows" :totalRecords="totalRecords" :lazy="true" :first="first" @page="onPage">
       <Column field="options" header="Options">
         <template #body="slotProps">
           <div class="option-buttons">
@@ -96,6 +96,9 @@ export default {
       busquedaBHerramienta: "",
       estado_sistema: "",
       estados_sistemas: [],
+      totalRecords: 0,
+      rows: 10,
+      first: 0,
     };
   },
   created() {
@@ -131,7 +134,9 @@ export default {
       }
     },
     filtrar(text) {
+      console.log(text);
       const textoBusqueda = text.toLowerCase();
+      console.log(textoBusqueda);
       this.datos = this.datos.filter(item =>
         Object.values(item).some(value => typeof value === 'string' && value.toLowerCase().includes(textoBusqueda))
       );
@@ -142,20 +147,19 @@ export default {
     openPersonaDialog() {
       this.$refs.AdmiPersonaDialog.openDialogCliente();
     },
-    async listar(filtro = "") {
+    async listar(filtro = "",page = 0) {
       try {
-        let params = {}
-        if (!filtro) {
-          params.estado = 'Activo'
-        }else{
-          params.estado = filtro
+        let params = {
+          estado: filtro || 'Activo',
+          page: page,
+          size: this.rows
         };
 
         const response = await this.$api.post(`${this.endpoint}/filter`, params);
         const resp = response.data;
         if (resp.success === true) {
-          this.datos = resp.data;
-          console.log(this.datos);
+          this.datos = resp.data.data;
+          this.totalRecords = resp.data.totalRecords;
         }
       } catch (e) {
         const data = e.response.data;
@@ -165,6 +169,11 @@ export default {
           text: `Algo salió mal: ${data.data}`,
         });
       }
+    },
+    onPage(event) {
+      this.first = event.first;
+      this.rows = event.rows;
+      this.listar('Activo' , event.page);
     },
    async ver(item) {
       this.dialogHeader = "Ver Registro";

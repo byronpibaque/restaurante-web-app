@@ -16,7 +16,7 @@ const infoClienteService = {
         const response = await api.post("/infoCliente/filter",params);
         const resp = response.data;
         if (resp.success === true) {
-          return resp.data;
+          return resp.data.data;
         }
       } catch (e) {
         const err = e.response;

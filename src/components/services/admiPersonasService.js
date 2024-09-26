@@ -34,7 +34,20 @@ const admiPersonaService = {
         return err.data;
       }
     },
+    validaPersona: async (api,params) => {
+        try {
+            const response = await api.post("/admiPersona/validatePersona",params);
+            const resp = response.data;
+            if (resp.success === true) {
+              return resp.data;
+            }
+        } catch (e) {
+            const err = e.response;
+            return err.data;
+        }
+    }
   };
+
   
   export default admiPersonaService;
   

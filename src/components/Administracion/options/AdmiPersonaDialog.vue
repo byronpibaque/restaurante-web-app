@@ -9,8 +9,8 @@
         <AutoComplete :disabled="view" placeholder="Digite CI, RUC, PASS" id="tipo_documento"
           v-model="registro.tipo_documento" :suggestions="itemsDet" class="input-spacing" @complete="search" dropdown />
         <InputText :disabled="view" id="numero_identificacion" v-model="registro.numero_identificacion"
-          placeholder="Número de Identificación" class="input-spacing" />
-        <InputText :disabled="view" id="nombre" v-model="registro.nombre" placeholder="Nombre" 
+          placeholder="Número de Identificación" class="input-spacing" @blur="validaExistePersona()" />
+        <InputText :disabled="view" id="nombre" v-model="registro.nombre" placeholder="Nombre"
         class="input-spacing" @input="updateFields" />
         <InputText :disabled="view" id="apellido" v-model="registro.apellido" placeholder="Apellido"
          @input="updateFields"
@@ -156,7 +156,8 @@ export default {
       cliente: false,
       itemsDet: [],
       inputSearch: "",
-      sucursales: []
+      sucursales: [],
+      exitePersonaBool:false,
     };
   },
   created() {
@@ -164,6 +165,30 @@ export default {
     this.getSucursales();
   },
   methods: {
+    async validaExistePersona(){
+      try {
+        if(this.registro.numero_identificacion){
+          const params = { numero_identificacion: this.registro.numero_identificacion };
+          const resPersona = await admiPersonaService.validaPersona(this.$api, params);
+          if (resPersona.success !== false) {
+            this.registro.id_persona = resPersona.id_persona;
+            this.registro.tipo_documento = resPersona.tipo_documento;
+            this.registro.numero_identificacion = resPersona.numero_identificacion;
+            this.registro.nombre = resPersona.nombre;
+            this.registro.apellido = resPersona.apellido;
+            this.registro.nombre_pila = resPersona.nombre_pila;
+            this.registro.direccion = resPersona.direccion;
+            this.registro.email = resPersona.email;
+            this.registro.celular = resPersona.celular;
+            this.exitePersonaBool=true;
+            this.registro.razon_social_comprador=resPersona.razon_social_comprador;
+          }
+        }
+      }
+      catch (e) {
+        console.error("Error al buscar sugerencias:", e);
+      }
+    },
     updateFields() {
       const fullName = `${this.registro.nombre} ${this.registro.apellido}`;
       this.registro.razon_social = fullName;
@@ -265,8 +290,15 @@ export default {
         this.registro.estado = "Activo";
         this.registro.usuario_creacion = this.$store.state.empleado.usuario;
         this.registro.usuario_modificacion = this.$store.state.empleado.usuario;
-        const resCab = await admiPersonaService.insert(this.$api, this.registro);
-        if (resCab.success === true) {
+        let resCab = null;
+    
+        if (this.exitePersonaBool) {
+          resCab = { data: { id_persona: this.registro.id_persona } };
+        } else {
+          resCab = await admiPersonaService.insert(this.$api, this.registro);
+        }
+    
+        if (resCab.success === true || this.exitePersonaBool) {
           if (this.propietario) {
             this.registro.persona_id = resCab.data.id_persona;
             const resPropietario = await this.$api.post(`${this.endpointPropietario}/`, this.registro);
@@ -276,12 +308,12 @@ export default {
             }
           }
           if (this.proveedor) {
-            if(this.registro.tipo_documento==='CI'){
-              this.registro.tipoIdentificacionProveedor='05';
-            }else if(this.registro.tipo_documento==='RUC'){
-              this.registro.tipoIdentificacionProveedor='04';
-            }else if(this.registro.tipo_documento==='PASS'){
-              this.registro.tipoIdentificacionProveedor='06';
+            if (this.registro.tipo_documento === 'CI') {
+              this.registro.tipoIdentificacionProveedor = '05';
+            } else if (this.registro.tipo_documento === 'RUC') {
+              this.registro.tipoIdentificacionProveedor = '04';
+            } else if (this.registro.tipo_documento === 'PASS') {
+              this.registro.tipoIdentificacionProveedor = '06';
             }
             this.registro.persona_id = resCab.data.id_persona;
             const resProveedor = await this.$api.post(`${this.endpointProveedor}/`, this.registro);
@@ -290,13 +322,13 @@ export default {
               bandera = true;
             }
           }
-          if(this.cliente){
-            if(this.registro.tipo_documento==='CI'){
-                this.registro.tipoIdentificacionComprador='05';
-            }else if(this.registro.tipo_documento==='RUC'){
-              this.registro.tipoIdentificacionComprador='04';
-            }else if(this.registro.tipo_documento==='PASS'){
-              this.registro.tipoIdentificacionComprador='06';
+          if (this.cliente) {
+            if (this.registro.tipo_documento === 'CI') {
+              this.registro.tipoIdentificacionComprador = '05';
+            } else if (this.registro.tipo_documento === 'RUC') {
+              this.registro.tipoIdentificacionComprador = '04';
+            } else if (this.registro.tipo_documento === 'PASS') {
+              this.registro.tipoIdentificacionComprador = '06';
             }
             this.registro.persona_id = resCab.data.id_persona;
             const resCliente = await this.$api.post(`${this.endpointCliente}/`, this.registro);
@@ -307,11 +339,11 @@ export default {
           }
           if (this.empleado) {
             this.registro.persona_id = resCab.data.id_persona;
-            //Primero creamos el empleado
+            // Primero creamos el empleado
             const resEmpleado = await this.$api.post(`${this.endpointEmpleado}/`, this.registro);
             const responseEmp = resEmpleado.data;
             if (responseEmp.success === true) {
-              //Si se crea el empleado, creamos el acceso
+              // Si se crea el empleado, creamos el acceso
               this.registro.accesos.empleado_id = responseEmp.data.id_empleado;
               const params = {
                 empleado_id: responseEmp.data.id_empleado,

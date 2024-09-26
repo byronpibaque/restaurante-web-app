@@ -26,6 +26,7 @@
                   @click="buscaClientes(nuevoRegistro.busqueda)"/>
           <InputText id="Código Barra" v-model="nuevoRegistro.busqueda" :disabled="view" class="w-10"
                      placeholder="Busca Número Identificación:"
+                     @blur="buscaClientes(nuevoRegistro.busqueda)"
                      @keypress.enter="buscaClientes(nuevoRegistro.busqueda)"/>
         </div>
         <div>
@@ -477,6 +478,7 @@ export default {
     },
     async buscaClientes(numeroIdentificacion) {
       try {
+        await this.showEsperaDialog();
         this.clienteData = {cliente: {}, persona: {}};
         if (numeroIdentificacion) {
           const params = {
@@ -485,11 +487,9 @@ export default {
           };
           const responseCliente = await infoClienteService.getByFilter(this.$api, params);
           if (responseCliente.success === false) {
-            this.$swal.fire({
-              icon: "error",
-              title: "Upss.. 😢",
-              text: `No se encontró un registro con N. Id: ${numeroIdentificacion}, regístrelo.`,
-            });
+            this.nuevoCliente.numero_identificacion = numeroIdentificacion;
+            this.openPersonaDialog();
+            await this.hideEsperaDialog();
           } else {
             const responseAdmiPersona = await admiPersonaService.getById(this.$api, responseCliente[0].persona_id);
             if (responseAdmiPersona) {
@@ -503,6 +503,7 @@ export default {
               title: "Cliente encontrado",
               text: `Cliente: ${responseAdmiPersona.nombre_pila} ✅`,
             });
+             await this.hideEsperaDialog();
             }
           }
         } else {
